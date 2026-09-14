@@ -11,7 +11,6 @@ def normalize_text(text):
   if not text:
     return ""
   text = str(text).strip().lower()
-  # Normalize Arabic letters variants
   text = text.replace("ة", "ه")
   text = (
       text.replace("أ", "ا")
@@ -19,7 +18,6 @@ def normalize_text(text):
       .replace("آ", "ا")
       .replace("ى", "ي")
   )
-  # Remove "ال" prefix if attached to words for better matching
   words = [
       w[2:] if w.startswith("ل") and len(w) > 3 else w for w in text.split()
   ]
@@ -33,6 +31,7 @@ st.markdown(
     .stApp { background-color: #0e1117; color: #ffffff; direction: rtl; text-align: right; }
     .card { background-color: #161b22; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #30363d; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
     .ad-banner { background: linear-gradient(135deg, #1f6feb, #238636); padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 20px; color: white; font-weight: bold; font-size: 16px; }
+    .info-box { background-color: #1f242c; padding: 12px 18px; border-radius: 8px; border-right: 4px solid #58a6ff; margin-bottom: 20px; font-size: 15px; color: #c9d1d9; }
     
     /* Clear and Large Text Formatting */
     h1, h2, h3 { color: #58a6ff !important; font-weight: bold !important; }
@@ -77,7 +76,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Initialize Session State securely with ALL original starter services (including Al-Khankah, Al-Marg, etc.)
+# Initialize Session State securely with ALL original starter services
 if "services_list" not in st.session_state:
   st.session_state["services_list"] = [
       {
@@ -128,17 +127,39 @@ menu = st.selectbox(
 
 if menu == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
-  st.markdown("<h2>🔍 تصفح الخدمات المعتمدة والبحث الذكي</h2>", unsafe_allow_html=True)
+  st.markdown("<h2>🔍 دليل الخدمات والبحث المخصص</h2>", unsafe_allow_html=True)
 
   if st.session_state["services_list"]:
-    # Smart Search Bar Feature supporting variants (ة/ه, etc.)
-    search_query = st.text_input(
-        "🔎 البحث السريع الذكي (اكتب اسم المنطقة مثل: الخانكة، خانكه، المرج... أو"
-        " اسم الخدمة):",
-        "",
+    all_regions = list(
+        set([s["region"] for s in st.session_state["services_list"]])
+    )
+    all_categories = list(
+        set([s["category"] for s in st.session_state["services_list"]])
     )
 
-    if search_query.strip() != "":
+    # Informative box showing available areas and categories explicitly
+    st.markdown(
+        f"""
+        <div class="info-box">
+            <b>💡 الأماكن والأقسام المتاحة حالياً في الموقع:</b><br>
+            • <b>الأماكن والمدن:</b> {', '.join(all_regions)}<br>
+            • <b>الأقسام والخدمات:</b> {', '.join(all_categories)}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Search bar with a dedicated search button using a form structure
+    with st.form("search_form"):
+      search_query = st.text_input(
+          "🔎 اكتب اسم المنطقة (مثل: الخانكة، المرج...) أو اسم الخدمة:", ""
+      )
+      search_btn = st.form_submit_button(
+          label="ابحث الآن 🔍 (أو اضغط Enter)"
+      )
+
+    # Determine which services to display based on button press or input
+    if search_btn and search_query.strip() != "":
       norm_query = normalize_text(search_query)
       st.markdown(
           f"<h3>نتائج البحث عن: '{search_query}'</h3>", unsafe_allow_html=True
@@ -150,42 +171,15 @@ if menu == "🔍 تصفح الدليل والخدمات":
             f"{s['name']} {s['job']} {s['category']} {s['region']}"
         )
         norm_combined = normalize_text(combined_text)
-
-        # Check if query words match normalized text flexibly
         if any(term in norm_combined for term in norm_query.split()):
           matched_services.append(s)
     else:
-      # Filter by Region and Category smoothly
-      col_r, col_c = st.columns(2)
-      with col_r:
-        existing_regions = list(
-            set([s["region"] for s in st.session_state["services_list"]])
-        )
-        selected_region = st.selectbox("اختر المنطقة للتصفح:", existing_regions)
-      with col_c:
-        existing_categories = list(
-            set(
-                [
-                    s["category"]
-                    for s in st.session_state["services_list"]
-                    if s["region"] == selected_region
-                ]
-            )
-        )
-        selected_category = st.selectbox(
-            "اختر القسم أو الخدمة:", existing_categories
-        )
-
+      # Default: Show ALL services available in the directory automatically before searching
       st.markdown(
-          f"<h3>الخدمات المتاحة في {selected_region} - {selected_category}</h3>",
+          "<h3>📋 جميع الخدمات والأنشطة المتاحة في الدليل</h3>",
           unsafe_allow_html=True,
       )
-      matched_services = [
-          s
-          for s in st.session_state["services_list"]
-          if s["region"] == selected_region
-          and s["category"] == selected_category
-      ]
+      matched_services = st.session_state["services_list"]
 
     if matched_services:
       for s in matched_services:
@@ -219,7 +213,7 @@ if menu == "🔍 تصفح الدليل والخدمات":
     else:
       st.info("لا توجد خدمات مطابقة لبحثك.")
   else:
-    st.info("لا توجد خدمات معتمدة حالياً في الدليل.")
+    st.info("لا توجد خدمات مضافة حالياً في الدليل.")
 
 elif menu == "➕ إضافة خدمة أو نشاط جديد":
   st.markdown("---")
