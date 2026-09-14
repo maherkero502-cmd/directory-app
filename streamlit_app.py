@@ -48,7 +48,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Initialize Session State
+# Initialize Session State with a default storage list
 if "services_list" not in st.session_state:
   st.session_state["services_list"] = [
       {
@@ -62,15 +62,19 @@ if "services_list" not in st.session_state:
       }
   ]
 
-# Navigation Menu
+# Navigation Menu (Including Admin Dashboard for you)
 menu = st.selectbox(
-    "القائمة الرئيسية:", ["🔍 تصفح الدليل والخدمات", "➕ أضف إعلانك أو منطقتك"]
+    "القائمة الرئيسية:",
+    [
+        "🔍 تصفح الدليل والخدمات",
+        "➕ أضف إعلانك أو منطقتك",
+        "⚙️ لوحة تحكم الإدارة (خاصة بك)",
+    ],
 )
 
 if menu == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
 
-  # Extract unique regions dynamically from current added services
   existing_regions = list(
       set([s["region"] for s in st.session_state["services_list"]])
   )
@@ -123,30 +127,20 @@ if menu == "🔍 تصفح الدليل والخدمات":
         " إعلان ومنطقة جديدة!"
     )
 
-else:
+elif menu == "➕ أضف إعلانك أو منطقتك":
   st.markdown("### ➕ إضافة إعلان أو منطقة جديدة للدليل")
   st.info(
-      "يمكنك كتابة أي منطقة جديدة لم تُضاف من قبل، ورفع صورتك، وسيتم حفظها"
-      " وعرضها فوراً في الدليل!"
+      "املأ البيانات التالية، يمكنك كتابة اسم منطقتك الجديدة مباشرة، وسيتم نشرها"
+      " فوراً!"
   )
 
   with st.form("add_service_form"):
     p_name = st.text_input("اسم صاحب النشاط أو الإعلان:")
 
-    # Option to select from existing or type a completely new region
-    region_input_type = st.radio(
-        "اختر طريقة تحديد المنطقة:", ["اختيار من القائمة", "إضافة منطقة جديدة ✍️"]
+    # Clean text input for region to avoid any bugs
+    p_region = st.text_input(
+        "اكتب اسم منطقتك أو مدينتك (مثال: الخانكة، شبرا، المرج، طوخ...):"
     )
-
-    existing_regions = list(
-        set([s["region"] for s in st.session_state["services_list"]])
-    )
-    if region_input_type == "اختيار من القائمة" and existing_regions:
-      p_region = st.selectbox("اختر المنطقة:", existing_regions)
-    else:
-      p_region = st.text_input(
-          "اكتب اسم المنطقة الجديدة (مثال: شبرا، طوخ، المطرية...):"
-      )
 
     p_cat = st.selectbox(
         "اختر القسم:",
@@ -186,5 +180,33 @@ else:
         )
       else:
         st.warning(
-            "من فضلك أكمل الحقول الأساسية واكتب اسم المنطقة بوضوح."
+            "من فضلك أكمل الحقول الأساسية (الاسم، اسم المنطقة، الوصف، ورقم"
+            " الواتساب)."
         )
+
+else:
+  st.markdown("### ⚙️ لوحة تحكم الإدارة (التحكم في الإعلانات والمناطق)")
+  admin_pass = st.text_input("أدخل كلمة مرور الإدارة:", type="password")
+
+  # You can change '1234' to any password you like
+  if admin_pass == "1234":
+    st.success("مرحباً بك يا مدير الموقع! هذه هي جميع الإعلانات المضافة حالياً:")
+
+    if st.session_state["services_list"]:
+      for idx, s in enumerate(st.session_state["services_list"]):
+        st.markdown(f"---")
+        st.write(
+            f"**رقم الإعلان:** {idx + 1} | **الاسم:** {s['name']} |"
+            f" **المنطقة:** {s['region']} | **القسم:** {s['category']}"
+        )
+        st.write(f"**التفاصيل:** {s['job']} | **الهاتف:** {s['phone']}")
+
+        if st.button(f"حذف هذا الإعلان ❌", key=f"del_{idx}"):
+          st.session_state["services_list"].pop(idx)
+          st.rerun()
+    else:
+      st.info("لا توجد إعلانات مضافة حتى الآن.")
+  elif admin_pass != "":
+    st.error("كلمة المرور غير صحيحة!")
+  else:
+    st.info("الرجاء إدخال كلمة المرور لعرض لوحة التحكم. (كلمة المرور التجريبية: 852741)")
