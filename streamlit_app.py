@@ -177,7 +177,7 @@ elif menu == "➕ إضافة خدمة أو نشاط جديد":
     p_image_file = st.file_uploader(
         "ارفع صورة النشاط (صورة مصغرة 4×6):", type=["jpg", "png", "jpeg"]
     )
-    p_phone = st.text_input("رقم الواتساب للتواصل (مثال: 201124214831):")
+    p_phone = st.text_input("رقم الواتساب للتواصل (مثال: 201127674550):")
     p_badge = st.text_input(
         "الشارة أو التقييم المطلوب:", value="موصى به ⭐"
     )
