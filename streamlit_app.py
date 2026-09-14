@@ -1,9 +1,8 @@
 import streamlit as st
+import pandas as pd
 
 st.set_page_config(
-    page_title="دليل خدمات الخانكة والسلام والمرج",
-    page_icon="📍",
-    layout="centered",
+    page_title="دليل خدمات منطقتك", page_icon="📍", layout="centered"
 )
 
 # Dark Theme & RTL CSS Support
@@ -13,7 +12,7 @@ st.markdown(
     .stApp { background-color: #0e1117; color: #ffffff; direction: rtl; text-align: right; }
     .card { background-color: #161b22; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #30363d; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
     .ad-banner { background: linear-gradient(135deg, #1f6feb, #238636); padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 20px; color: white; font-weight: bold; }
-    .stSelectbox label, .stTextInput label, .stTextArea label { color: #58a6ff; font-weight: bold; }
+    .stSelectbox label, .stTextInput label, .stTextArea label, .stFileUploader label { color: #58a6ff; font-weight: bold; }
     </style>
 """,
     unsafe_allow_html=True,
@@ -21,19 +20,21 @@ st.markdown(
 
 # App Header & Logo Display
 st.markdown(
-    "<h1 style='text-align: center;'>📍 دليل خدمات الخانكة والسلام والمرج</h1>",
+    "<h1 style='text-align: center;'>📍 دليل خدمات منطقتك</h1>",
     unsafe_allow_html=True,
 )
 
-# Displaying the user uploaded logo nicely
-st.image(
-    "https://raw.githubusercontent.com/maherkero502-cmd/directory-app/main/logo.png",
-    use_container_width=True,
-)
-# (Fallback text if image is uploading)
+try:
+  st.image("logo.jpg", use_container_width=True)
+except:
+  st.markdown(
+      "<h3 style='text-align: center; color: #58a6ff;'>دليلك في الخير</h3>",
+      unsafe_allow_html=True,
+  )
+
 st.markdown(
     "<p style='text-align: center; color: #8b949e; font-size: 16px;'>خدمات"
-    " منطقتك في مكان واحد 🌟</p>",
+    " منطقتك وكل المدن في مكان واحد 🌟</p>",
     unsafe_allow_html=True,
 )
 
@@ -47,19 +48,35 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Initialize Session State (Cleaned up, no old dummy plumber data)
+# Initialize Session State
 if "services_list" not in st.session_state:
-  st.session_state["services_list"] = []
+  st.session_state["services_list"] = [
+      {
+          "region": "الخانكة",
+          "category": "صيدليات",
+          "name": "صيدلية الشفاء",
+          "job": "خدمة أدوية ومستحضرات تجميل طوال اليوم",
+          "image": None,
+          "phone": "201124214831",
+          "badge": "معتمد ⭐",
+      }
+  ]
 
 # Navigation Menu
 menu = st.selectbox(
-    "القائمة الرئيسية:", ["🔍 تصفح الدليل والخدمات", "➕ أضف إعلانك أو خدمتك"]
+    "القائمة الرئيسية:", ["🔍 تصفح الدليل والخدمات", "➕ أضف إعلانك أو منطقتك"]
 )
 
 if menu == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
-  regions = ["الخانكة", "السلام", "المرج", "عين شمس"]
-  selected_region = st.selectbox("اختر المنطقة:", regions)
+
+  # Extract unique regions dynamically from current added services
+  existing_regions = list(
+      set([s["region"] for s in st.session_state["services_list"]])
+  )
+  selected_region = st.selectbox(
+      "اختر المنطقة للتصفح:", existing_regions if existing_regions else ["الخانكة"]
+  )
 
   categories = [
       "سباك",
@@ -82,16 +99,14 @@ if menu == "🔍 تصفح الدليل والخدمات":
 
   if matched_services:
     for s in matched_services:
-      img_tag = (
-          f"<img src='{s['image']}' style='width:100%; height:180px;"
-          " object-fit: cover; border-radius: 8px; margin-bottom: 10px;'>"
-          if s["image"]
-          else ""
-      )
+      if s["image"] is not None:
+        st.image(
+            s["image"], use_container_width=True, caption=s["name"]
+        )
+
       st.markdown(
           f"""
             <div class="card">
-                {img_tag}
                 <h3 style="margin-top: 5px;">{s['name']}</h3>
                 <p><b>التفاصيل:</b> {s['job']}</p>
                 <p style="color: #f0883e; font-size: 14px;"><b>التقييم/الشارة:</b> {s['badge']}</p>
@@ -104,52 +119,72 @@ if menu == "🔍 تصفح الدليل والخدمات":
       )
   else:
     st.info(
-        "لا توجد إعلانات مضافة في هذا القسم حتى الآن. كن أول المنضمين وأضف"
-        " إعلانك الآن!"
+        "لا توجد إعلانات مضافة في هذا القسم والمنطقة حتى الآن. كن أول من يضيف"
+        " إعلان ومنطقة جديدة!"
     )
 
 else:
-  st.markdown("### ➕ إضافة إعلان أو نشاط جديد للدليل")
+  st.markdown("### ➕ إضافة إعلان أو منطقة جديدة للدليل")
+  st.info(
+      "يمكنك كتابة أي منطقة جديدة لم تُضاف من قبل، ورفع صورتك، وسيتم حفظها"
+      " وعرضها فوراً في الدليل!"
+  )
+
   with st.form("add_service_form"):
     p_name = st.text_input("اسم صاحب النشاط أو الإعلان:")
-    p_region = st.selectbox(
-        "اختر المنطقة:", ["الخانكة", "السلام", "المرج", "عين شمس"]
+
+    # Option to select from existing or type a completely new region
+    region_input_type = st.radio(
+        "اختر طريقة تحديد المنطقة:", ["اختيار من القائمة", "إضافة منطقة جديدة ✍️"]
     )
+
+    existing_regions = list(
+        set([s["region"] for s in st.session_state["services_list"]])
+    )
+    if region_input_type == "اختيار من القائمة" and existing_regions:
+      p_region = st.selectbox("اختر المنطقة:", existing_regions)
+    else:
+      p_region = st.text_input(
+          "اكتب اسم المنطقة الجديدة (مثال: شبرا، طوخ، المطرية...):"
+      )
+
     p_cat = st.selectbox(
         "اختر القسم:",
         ["سباك", "سواق توك توك", "صيدليات", "عربية ملاكي", "كافيه", "مطعم", "أخرى"],
     )
     p_job = st.text_area("وصف الخدمة أو الإعلان بالتفصيل:")
-    p_image = st.text_input(
-        "رابط صورة الإعلان (اختياري - رابط مباشر للصورة):"
+
+    p_image_file = st.file_uploader(
+        "ارفع صورة النشاط أو صورتك الشخصية:", type=["jpg", "png", "jpeg"]
     )
+
     p_phone = st.text_input(
         "رقم الواتساب للتواصل (مثال: 201124214831 بدون علامة +):"
     )
     p_badge = st.text_input(
-        "الشارة أو التقييم (مثال: مميز ⭐ / معتمد):", value="معتمد ⭐"
+        "الشارة أو التقييم (مثال: مميز ⭐ / معتمد):", value="جديد 🌟"
     )
 
     submit_button = st.form_submit_button(
-        label="نشر الإعلان في الدليل مباشرة 🚀"
+        label="نشر الإعلان والمنطقة في الدليل مباشرة 🚀"
     )
 
     if submit_button:
-      if p_name and p_phone and p_job:
+      if p_name and p_phone and p_job and p_region:
         st.session_state["services_list"].append({
-            "region": p_region,
+            "region": p_region.strip(),
             "category": p_cat,
             "name": p_name,
             "job": p_job,
-            "image": p_image,
+            "image": p_image_file,
             "phone": p_phone,
             "badge": p_badge,
         })
         st.success(
-            "تم نشر الإعلان بنجاح! انتقل إلى (تصفح الدليل والخدمات) لمشاهدته"
-            " بشكله الجديد."
+            "تم إضافة المنطقة والإعلان بنجاح! انتقل إلى (تصفح الدليل والخدمات)"
+            " لرؤيتها."
         )
       else:
         st.warning(
-            "من فضلك أكمل الحقول الأساسية (الاسم، التفاصيل، ورقم الواتساب)."
+            "من فضلك أكمل الحقول الأساسية واكتب اسم المنطقة بوضوح."
         )
