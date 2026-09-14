@@ -48,7 +48,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Initialize Session State with a default storage list
+# Initialize Session State
 if "services_list" not in st.session_state:
   st.session_state["services_list"] = [
       {
@@ -62,7 +62,7 @@ if "services_list" not in st.session_state:
       }
   ]
 
-# Navigation Menu (Including Admin Dashboard for you)
+# Navigation Menu
 menu = st.selectbox(
     "القائمة الرئيسية:",
     [
@@ -75,6 +75,7 @@ menu = st.selectbox(
 if menu == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
 
+  # Dynamic Regions
   existing_regions = list(
       set([s["region"] for s in st.session_state["services_list"]])
   )
@@ -82,16 +83,14 @@ if menu == "🔍 تصفح الدليل والخدمات":
       "اختر المنطقة للتصفح:", existing_regions if existing_regions else ["الخانكة"]
   )
 
-  categories = [
-      "سباك",
-      "سواق توك توك",
-      "صيدليات",
-      "عربية ملاكي",
-      "كافيه",
-      "مطعم",
-      "أخرى",
-  ]
-  selected_category = st.selectbox("اختر القسم:", categories)
+  # Dynamic Categories based on what users typed
+  existing_categories = list(
+      set([s["category"] for s in st.session_state["services_list"]])
+  )
+  selected_category = st.selectbox(
+      "اختر القسم أو الخدمة:",
+      existing_categories if existing_categories else ["صيدليات"],
+  )
 
   st.markdown(f"### نتائج البحث في {selected_region} - {selected_category}")
 
@@ -122,30 +121,25 @@ if menu == "🔍 تصفح الدليل والخدمات":
           unsafe_allow_html=True,
       )
   else:
-    st.info(
-        "لا توجد إعلانات مضافة في هذا القسم والمنطقة حتى الآن. كن أول من يضيف"
-        " إعلان ومنطقة جديدة!"
-    )
+    st.info("لا توجد إعلانات مضافة في هذا القسم والمنطقة حتى الآن.")
 
 elif menu == "➕ أضف إعلانك أو منطقتك":
   st.markdown("### ➕ إضافة إعلان أو منطقة جديدة للدليل")
-  st.info(
-      "املأ البيانات التالية، يمكنك كتابة اسم منطقتك الجديدة مباشرة، وسيتم نشرها"
-      " فوراً!"
-  )
+  st.info("اكتب منطقتك ووظيفتك بحرية تامة، وسيتم نشر إعلانك فوراً!")
 
   with st.form("add_service_form"):
     p_name = st.text_input("اسم صاحب النشاط أو الإعلان:")
 
-    # Clean text input for region to avoid any bugs
+    # Free text input for region
     p_region = st.text_input(
-        "اكتب اسم منطقتك أو مدينتك (مثال: الخانكة، شبرا، المرج، طوخ...):"
+        "اكتب اسم منطقتك أو مدينتك (مثال: الخانكة، المرج، شبرا...):"
     )
 
-    p_cat = st.selectbox(
-        "اختر القسم:",
-        ["سباك", "سواق توك توك", "صيدليات", "عربية ملاكي", "كافيه", "مطعم", "أخرى"],
+    # Free text input for category/job so anyone can add any new job freely
+    p_cat = st.text_input(
+        "اكتب اسم الخدمة أو الوظيفة (مثال: سباك، كهربائي، صيدلية، مطعم، ممرض...):"
     )
+
     p_job = st.text_area("وصف الخدمة أو الإعلان بالتفصيل:")
 
     p_image_file = st.file_uploader(
@@ -160,14 +154,14 @@ elif menu == "➕ أضف إعلانك أو منطقتك":
     )
 
     submit_button = st.form_submit_button(
-        label="نشر الإعلان والمنطقة في الدليل مباشرة 🚀"
+        label="نشر الإعلان في الدليل مباشرة 🚀"
     )
 
     if submit_button:
-      if p_name and p_phone and p_job and p_region:
+      if p_name and p_phone and p_job and p_region and p_cat:
         st.session_state["services_list"].append({
             "region": p_region.strip(),
-            "category": p_cat,
+            "category": p_cat.strip(),
             "name": p_name,
             "job": p_job,
             "image": p_image_file,
@@ -175,29 +169,27 @@ elif menu == "➕ أضف إعلانك أو منطقتك":
             "badge": p_badge,
         })
         st.success(
-            "تم إضافة المنطقة والإعلان بنجاح! انتقل إلى (تصفح الدليل والخدمات)"
-            " لرؤيتها."
+            "تم نشر إعلانك بنجاح! انتقل إلى (تصفح الدليل والخدمات) لرؤيته."
         )
       else:
-        st.warning(
-            "من فضلك أكمل الحقول الأساسية (الاسم، اسم المنطقة، الوصف، ورقم"
-            " الواتساب)."
-        )
+        st.warning("من فضلك أكمل جميع الحقول الأساسية المطلوبة.")
 
 else:
-  st.markdown("### ⚙️ لوحة تحكم الإدارة (التحكم في الإعلانات والمناطق)")
+  st.markdown("### ⚙️ لوحة تحكم الإدارة (خاصة بك)")
+  # Secure hidden password (not shown anywhere on screen)
+  ADMIN_PASSWORD = "Kero@2026"  # تقدر تغيرها لأي كلمة سر تعجبك هنا
+
   admin_pass = st.text_input("أدخل كلمة مرور الإدارة:", type="password")
 
-  # You can change '1234' to any password you like
-  if admin_pass == "1234":
-    st.success("مرحباً بك يا مدير الموقع! هذه هي جميع الإعلانات المضافة حالياً:")
+  if admin_pass == ADMIN_PASSWORD:
+    st.success("مرحباً بك يا كيمو! هذه هي جميع الإعلانات المضافة:")
 
     if st.session_state["services_list"]:
       for idx, s in enumerate(st.session_state["services_list"]):
         st.markdown(f"---")
         st.write(
-            f"**رقم الإعلان:** {idx + 1} | **الاسم:** {s['name']} |"
-            f" **المنطقة:** {s['region']} | **القسم:** {s['category']}"
+            f"**الإعلان #{idx + 1}** | **الاسم:** {s['name']} | **المنطقة:**"
+            f" {s['region']} | **القسم:** {s['category']}"
         )
         st.write(f"**التفاصيل:** {s['job']} | **الهاتف:** {s['phone']}")
 
@@ -209,4 +201,4 @@ else:
   elif admin_pass != "":
     st.error("كلمة المرور غير صحيحة!")
   else:
-    st.info("الرجاء إدخال كلمة المرور لعرض لوحة التحكم. (كلمة المرور التجريبية: 852741)")
+    st.info("الرجاء إدخال كلمة المرور السرية للوصول للوحة التحكم.")
