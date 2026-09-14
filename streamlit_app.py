@@ -65,7 +65,7 @@ if "services_list" not in st.session_state:
           "name": "صيدلية الشفاء",
           "job": "خدمة أدوية ومستحضرات تجميل طوال اليوم",
           "image": None,
-          "phone": "201124214831",
+          "phone": "201127674550",
           "badge": "معتمد ⭐",
           "status": "approved",
       }
