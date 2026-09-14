@@ -2,18 +2,17 @@ import pandas as pd
 import requests
 import streamlit as st
 
-# إعداد الصفحة وتكوين العرض
+# إعداد الصفحة
 st.set_page_config(
     page_title="دليلك في الخير", page_icon="🌟", layout="centered"
 )
 
-# تصميم وتنسيق CSS بروفيشنال وفخم (Dark Theme عصري)
+# تنسيق التصميم العصري (Dark Theme)
 st.markdown(
     """
     <style>
     .stApp { background-color: #0b0f19; color: #ffffff; direction: rtl; text-align: right; }
     
-    /* البنر الرئيسي للموقع */
     .hero-banner {
         background: linear-gradient(135deg, #1f6feb 0%, #238636 100%);
         padding: 30px 20px;
@@ -26,7 +25,6 @@ st.markdown(
     .hero-banner h1 { font-size: 32px !important; margin-bottom: 8px; color: #ffffff !important; }
     .hero-banner p { font-size: 16px !important; color: #e6edf3 !important; margin: 0; }
 
-    /* كروت العرض الاحترافية */
     .service-card {
         background-color: #161b22;
         padding: 20px;
@@ -50,7 +48,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# واجهة البنر
+# البنر الرئيسي
 st.markdown(
     """
     <div class="hero-banner">
@@ -61,8 +59,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# روابط الشيت والـ Apps Script الخاص بك
-REGIONS_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRo_K44P9J0mEaWBCH_d9_7Mhn3QGAxOKihLiWBVOyPSo8eR20mjgyt-jaclJ045i1jdDVwGwUruvCF/pub?gid=0&single=true&output=csv"
+# روابط الشيت والـ Apps Script
+FULL_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRo_K44P9J0mEaWBCH_d9_7Mhn3QGAxOKihLiWBVOyPSo8eR20mjgyt-jaclJ045i1jdDVwGwUruvCF/pub?output=csv"
 APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUtpSF0ia-TFPjNSea6bTnI6s-bIUiv0iQ1h84_8m8aSYWp3WX11wmTRIGj-5nYWnYSQ/exec"
 
 
@@ -76,15 +74,15 @@ def load_data(url):
     return pd.DataFrame()
 
 
-df_regions = load_data(REGIONS_SHEET_URL)
+df_main = load_data(FULL_SHEET_URL)
 
-# القائمة الرئيسية للموقع
+# القائمة الرئيسية
 app_mode = st.selectbox(
     "القائمة الرئيسية:",
     [
         "🔍 تصفح الدليل والخدمات",
         "➕ اطلب إضافة خدمة أو نشاط جديد",
-        "🔐 لوحة تحكم الأدمين",
+        "🔐 لوحة تحكم الإدارة",
     ],
 )
 
@@ -92,9 +90,9 @@ if app_mode == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
   st.markdown("<h3>🔍 تصفح الخدمات والأنشطة</h3>", unsafe_allow_html=True)
 
-  if not df_regions.empty:
-    col_name = df_regions.columns[0]
-    all_items = df_regions[col_name].dropna().astype(str).unique().tolist()
+  if not df_main.empty:
+    col_name = df_main.columns[0]
+    all_items = df_main[col_name].dropna().astype(str).unique().tolist()
 
     selected_item = st.selectbox(
         "اختر أو ابحث:", ["اختر من القائمة..."] + all_items
@@ -104,13 +102,11 @@ if app_mode == "🔍 تصفح الدليل والخدمات":
       st.markdown(f"---")
       st.markdown(f"<h2>📍 تفاصيل العنصر: {selected_item}</h2>", unsafe_allow_html=True)
 
-      filtered_data = df_regions[
-          df_regions[col_name].astype(str) == selected_item
-      ]
+      filtered_data = df_main[df_main[col_name].astype(str) == selected_item]
 
       for idx, row in filtered_data.iterrows():
         card_html = "<div class='service-card'>"
-        for col in df_regions.columns:
+        for col in df_main.columns:
           val = row[col]
           if pd.notna(val):
             card_html += f"<p><b>{col}:</b> {val}</p>"
@@ -119,9 +115,7 @@ if app_mode == "🔍 تصفح الدليل والخدمات":
     else:
       st.info("💡 اختر عنصراً من القائمة أعلاه لعرض التفاصيل الكاملة.")
   else:
-    st.warning(
-        "⚠️ جدول البيانات فارغ حالياً أو بانتظار إضافات جديدة من الأنشطة."
-    )
+    st.warning("⚠️ جدول البيانات فارغ حالياً.")
 
 elif app_mode == "➕ اطلب إضافة خدمة أو نشاط جديد":
   st.markdown("---")
@@ -129,8 +123,8 @@ elif app_mode == "➕ اطلب إضافة خدمة أو نشاط جديد":
       "<h3>📝 نموذج تسجيل خدمة أو نشاط جديد</h3>", unsafe_allow_html=True
   )
   st.markdown(
-      "<p style='color: #8b949e;'>أضف بيانات نشاطك بكل سهولة لتصل مباشرة للإدارة"
-      " وتظهر في الدليل.</p>",
+      "<p style='color: #8b949e;'>أضف بيانات نشاطك لتصل للإدارة وتظهر في الدليل"
+      " بعد المراجعة.</p>",
       unsafe_allow_html=True,
   )
 
@@ -139,10 +133,10 @@ elif app_mode == "➕ اطلب إضافة خدمة أو نشاط جديد":
         "اسم صاحب النشاط / المسؤول:", placeholder="مثال: أحمد محمد"
     )
     service_name = st.text_input(
-        "اسم الخدمة أو النشاط:", placeholder="مثال: صيدلية الشفاء / مطعم البرنس"
+        "اسم الخدمة أو النشاط:", placeholder="مثال: صيدلية الشفاء"
     )
     region_name = st.text_input(
-        "المنطقة أو الحي:", placeholder="مثال: الخانكة - الشارع العمومي"
+        "المنطقة أو الحي:", placeholder="مثال: الخانكة"
     )
     phone_number = st.text_input(
         "رقم الواتساب أو التواصل:", placeholder="مثال: 01127674550"
@@ -157,7 +151,6 @@ elif app_mode == "➕ اطلب إضافة خدمة أو نشاط جديد":
           and region_name
           and phone_number
       ):
-        # إرسال البيانات أوتوماتيك للـ Google Sheet عبر الـ Apps Script
         payload = {
             "owner_name": owner_name,
             "service_name": service_name,
@@ -168,17 +161,14 @@ elif app_mode == "➕ اطلب إضافة خدمة أو نشاط جديد":
           response = requests.post(APPS_SCRIPT_URL, json=payload)
           if response.status_code == 200:
             st.success(
-                "🎉 تم إرسال طلبك بنجاح وسجل في الشيت! سيتم مراجعته وعرضه في"
-                " الدليل."
+                "🎉 تم إرسال طلبك بنجاح! سيتم مراجعته وعرضه في الدليل قريباً."
             )
           else:
-            st.warning(
-                "⚠️ تم الإرسال ولكن يرجى التحقق من لوحة التحكم."
-            )
+            st.warning("⚠️ تم الإرسال، تحقق من لوحة التحكم.")
         except Exception as e:
-          st.error(f"❌ حدث خطأ في الاتصال: {e}")
+          st.error(f"❌ حدث خطأ: {e}")
       else:
-        st.error("⚠️ يرجى ملء كافة الحقول المطلوبة بشكل صحيح.")
+        st.error("⚠️ يرجى ملء كافة الحقول المطلوبة.")
 
 else:
   st.markdown("---")
@@ -190,12 +180,18 @@ else:
   if admin_pass == "Gemy@2026":
     st.success("✅ أهلاً بك يا كيمو، تم تسجيل الدخول بنجاح.")
     st.markdown("---")
-    st.markdown("<h4>📋 البيانات الحالية في الشيت:</h4>", unsafe_allow_html=True)
-    if not df_regions.empty:
-      st.dataframe(df_regions, use_container_width=True)
+    st.markdown("<h4>📥 مراجعة الطلبات الجديدة الواردة:</h4>", unsafe_allow_html=True)
+    st.info(
+        "💡 أي طلب جديد سيتم تسجيله عبر النموذج سيظهر هنا في الشيت، ويمكنك"
+        " مراجعته ونقله للجدول الرئيسي مباشرة."
+    )
+
+    st.markdown("<h4>📋 محتوى الشيت الحالي:</h4>", unsafe_allow_html=True)
+    if not df_main.empty:
+      st.dataframe(df_main, use_container_width=True)
     else:
-      st.info("الشيت فارغ تماماً حالياً.")
+      st.info("الشيت فارغ حالياً.")
   elif admin_pass:
     st.error("❌ كلمة المرور غير صحيحة.")
   else:
-    st.info("💡 برجاء إدخال كلمة المرور (Gemy@2026) لفتح اللوحة.")
+    st.info("💡 برجاء إدخال كلمة المرور الصحيحة (Gemy@2026).")
