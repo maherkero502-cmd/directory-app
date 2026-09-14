@@ -72,7 +72,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Initialize Session State: Clean slate with NO dummy data
+# Initialize Session State securely
 if "services_list" not in st.session_state:
   st.session_state["services_list"] = []
 
@@ -186,16 +186,18 @@ elif menu == "➕ إضافة خدمة أو نشاط جديد":
   st.markdown("---")
   st.markdown("<h2>➕ أضف خدمتك أو نشاطك للدليل</h2>", unsafe_allow_html=True)
   st.markdown(
-      "<p>املأ بيانات خدمتك، وسيتم إرسالها فوراً للإدارة للمراجعة وتأكيد"
-      " النشر.</p>",
+      "<p>املأ بيانات خدمتك بدقة (ولا تنسَ تحديد اسم منطقتك)، وسيتم إرسالها"
+      " للإدارة للمراجعة والنشر.</p>",
       unsafe_allow_html=True,
   )
 
   with st.form("add_service_form"):
     p_name = st.text_input("اسم صاحب النشاط أو الخدمة:")
-    p_region = st.text_input("اكتب اسم منطقتك (مثال: الخانكة أو المرج):")
+    p_region = st.text_input(
+        "📍 اكتب اسم المنطقة أو المدينة (مثال: الخانكة، المرج...):"
+    )
     p_cat = st.text_input(
-        "اكتب اسم الخدمة أو الوظيفة (مثال: سباك، صيدلية...):"
+        "اكتب اسم القسم أو التخصص (مثال: صيدليات، سوبر ماركت، سباك...):"
     )
     p_job = st.text_area("وصف الخدمة أو الإعلان بالتفصيل:")
     p_image_file = st.file_uploader(
@@ -223,11 +225,11 @@ elif menu == "➕ إضافة خدمة أو نشاط جديد":
             "badge": p_badge,
         })
         st.success(
-            "تم إرسال طلبك بنجاح! توجه إلى لوحة تحكم الإدارة لتأكيد ونشر الخدمة"
-            " فوراً."
+            "تم إرسال طلبك بنجاح! توجه الآن إلى لوحة تحكم الإدارة لتأكيد ونشر"
+            " الخدمة فوراً لترى للجميع."
         )
       else:
-        st.warning("من فضلك أكمل جميع الحقول الأساسية المطلوبة.")
+        st.warning("من فضلك أكمل جميع الحقول الأساسية المطلوبة (بما فيها المنطقة).")
 
 elif menu == "⭐ طلب إعلان على الصفحة الرئيسية":
   st.markdown("---")
@@ -290,10 +292,10 @@ else:
           ):
             st.session_state["services_list"].append(s)
             st.session_state["pending_services"].pop(idx)
-            st.success("تم تأكيد النشر وأصبحت الخدمة ظاهرة في الدليل!")
+            st.success("تم تأكيد النشر وأصبحت الخدمة ظاهرة للجميع في الدليل!")
             st.rerun()
         with col2:
-          if st.button(f"رفض وإلغاء ❌", key=f"reject_{idx}графі"):
+          if st.button(f"رفض وإلغاء ❌", key=f"reject_{idx}"):
             st.session_state["pending_services"].pop(idx)
             st.success("تم رفض الطلب.")
             st.rerun()
@@ -319,7 +321,7 @@ else:
               st.session_state["services_list"].append(s)
               st.session_state["pending_services"].pop(idx)
               st.success(
-                  "تم تصحيح الخطأ الإملائي ونشر الخدمة في الدليل بنجاح!"
+                  "تم تصحيح الخطأ الإملائي ونشر الخدمة للجميع في الدليل بنجاح!"
               )
               st.rerun()
     else:
