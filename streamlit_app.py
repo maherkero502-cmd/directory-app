@@ -1,155 +1,212 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
-# إعداد الصفحة وتكوين العرض
 st.set_page_config(
-    page_title="دليلك في الخير", page_icon="📍", layout="centered"
+    page_title="دليل خدمات منطقتك", page_icon="📍", layout="centered"
 )
 
-# تصميم وتنسيق CSS بروفيشنال للشكل الجذاب والثيم الداكن الفخم
+# Dark Theme & RTL CSS Support
 st.markdown(
     """
     <style>
     .stApp { background-color: #0e1117; color: #ffffff; direction: rtl; text-align: right; }
-    
-    /* تصميم البنر الرئيسي في الواجهة */
-    .hero-banner {
-        background: linear-gradient(135deg, #1f6feb 0%, #238636 100%);
-        padding: 30px 20px;
-        border-radius: 15px;
-        text-align: center;
-        color: white;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-    }
-    .hero-banner h1 {
-        font-size: 32px !important;
-        margin-bottom: 10px;
-        color: #ffffff !important;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .hero-banner p {
-        font-size: 18px !important;
-        color: #e6edf3 !important;
-        margin: 0;
-    }
-
-    /* تصميم الكروت للمناطق والخدمات */
-    .region-card {
-        background-color: #161b22;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 15px;
-        border: 1px solid #30363d;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        transition: transform 0.2s;
-    }
-    .region-card:hover {
-        border-color: #58a6ff;
-        transform: translateY(-2px);
-    }
-
-    h2, h3 { color: #58a6ff !important; font-weight: bold !important; }
-    p, label, span, .stMarkdown { color: #f0f6fc !important; font-size: 16px !important; }
-    
-    /* تنسيق مربعات الإدخال والبحث */
-    .stTextInput input {
-        background-color: #161b22 !important;
-        color: #ffffff !important;
-        border: 1px solid #30363d !important;
-        border-radius: 8px !important;
-    }
-    .stTextInput label { color: #7ee787 !important; font-weight: bold !important; font-size: 17px !important; }
+    .card { background-color: #161b22; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #30363d; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
+    .ad-banner { background: linear-gradient(135deg, #1f6feb, #238636); padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 20px; color: white; font-weight: bold; }
+    .stSelectbox label, .stTextInput label, .stTextArea label, .stFileUploader label { color: #58a6ff; font-weight: bold; }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# واجهة البنر الرئيسي في الأعلى
+# App Header & Logo Display
+st.markdown(
+    "<h1 style='text-align: center;'>📍 دليل خدمات منطقتك</h1>",
+    unsafe_allow_html=True,
+)
+
+try:
+  st.image("logo.jpg", use_container_width=True)
+except:
+  st.markdown(
+      "<h3 style='text-align: center; color: #58a6ff;'>دليلك في الخير</h3>",
+      unsafe_allow_html=True,
+  )
+
+st.markdown(
+    "<p style='text-align: center; color: #8b949e; font-size: 16px;'>خدمات"
+    " منطقتك وكل المدن في مكان واحد 🌟</p>",
+    unsafe_allow_html=True,
+)
+
+# Professional Ad Space Banner
 st.markdown(
     """
-    <div class="hero-banner">
-        <h1>🌟 دليلك في الخير 🌟</h1>
-        <p>دليلك الشامل للخدمات والأنشطة في منطقتك.. الكل في خدمتكم</p>
+    <div class="ad-banner">
+        📢 لعرض إعلانك أو نشاطك هنا بشكل مميز، تواصل مع الإدارة عبر الواتساب: 01127674550
     </div>
 """,
     unsafe_allow_html=True,
 )
 
-# رابط الشيت المباشر (تبويب المناطق)
-SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRo_K44P9J0mEaWBCH_d9_7Mhn3QGAxOKihLiWBVOyPSo8eR20mjgyt-jaclJ045i1jdDVwGwUruvCF/pub?gid=0&single=true&output=csv"
+# Initialize Session State with a default storage list
+if "services_list" not in st.session_state:
+  st.session_state["services_list"] = [
+      {
+          "region": "الخانكة",
+          "category": "صيدليات",
+          "name": "صيدلية الشفاء",
+          "job": "خدمة أدوية ومستحضرات تجميل طوال اليوم",
+          "image": None,
+          "phone": "201124214831",
+          "badge": "معتمد ⭐",
+      }
+  ]
 
-
-# دالة قراءة البيانات مع التخزين المؤقت لسرعة التحميل
-@st.cache_data(ttl=30)
-def load_data(url):
-  try:
-    df = pd.read_csv(url)
-    # تنظيف أسماء الأعمدة من المسافات الزائدة
-    df.columns = df.columns.str.strip()
-    return df
-  except Exception as e:
-    return pd.DataFrame()
-
-
-# جلب البيانات
-df_regions = load_data(SHEET_URL)
-
-# شريط التنقل الجانبي أو القائمة الرئيسية
+# Navigation Menu (Including Admin Dashboard for you)
 menu = st.selectbox(
-    "اختر قسم التصفح:",
-    ["📍 استعراض المناطق والبحث", "➕ إضافة منطقة جديدة (عبر الشيت)"],
+    "القائمة الرئيسية:",
+    [
+        "🔍 تصفح الدليل والخدمات",
+        "➕ أضف إعلانك أو منطقتك",
+        "⚙️ لوحة تحكم الإدارة (خاصة بك)",
+    ],
 )
 
-if menu == "📍 استعراض المناطق والبحث":
+if menu == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
-  st.markdown("<h3>🔍 ابحث عن منطقتك المفضلة</h3>", unsafe_allow_html=True)
 
-  if not df_regions.empty:
-    # خانة البحث السريع
-    search_query = st.text_input(
-        "اكتب اسم المنطقة للبحث عنها:", placeholder="مثال: الخانكة، المرج..."
-    )
+  existing_regions = list(
+      set([s["region"] for s in st.session_state["services_list"]])
+  )
+  selected_region = st.selectbox(
+      "اختر المنطقة للتصفح:", existing_regions if existing_regions else ["الخانكة"]
+  )
 
-    # تصفية البيانات بناءً على البحث
-    if search_query:
-      # البحث في أول عمود متاح أو عمود يحتوي على اسم المنطقة
-      col_name = df_regions.columns[
-          0
-      ]  # افتراض أن العمود الأول هو اسم المنطقة
-      filtered_df = df_regions[
-          df_regions[col_name].astype(str).str.contains(search_query, na=False)
-      ]
-    else:
-      filtered_df = df_regions
+  categories = [
+      "سباك",
+      "سواق توك توك",
+      "صيدليات",
+      "عربية ملاكي",
+      "كافيه",
+      "مطعم",
+      "أخرى",
+  ]
+  selected_category = st.selectbox("اختر القسم:", categories)
 
-    st.markdown(
-        f"<p style='color: #8b949e;'>عدد المناطق المتاحة: <b>{len(filtered_df)}</b></p>",
-        unsafe_allow_html=True,
-    )
-    st.markdown("---")
+  st.markdown(f"### نتائج البحث في {selected_region} - {selected_category}")
 
-    # عرض المناطق في شكل كروت أو جدول منظم
-    for index, row in filtered_df.iterrows():
-      # عرض كل صف داخل كارت بروفيشنال
-      card_content = "<div class='region-card'>"
-      for col in df_regions.columns:
-        val = row[col]
-        if pd.notna(val):
-          card_content += f"<p><b>{col}:</b> {val}</p>"
-      card_content += "</div>"
-      st.markdown(card_content, unsafe_allow_html=True)
+  matched_services = [
+      s
+      for s in st.session_state["services_list"]
+      if s["region"] == selected_region and s["category"] == selected_category
+  ]
 
+  if matched_services:
+    for s in matched_services:
+      if s["image"] is not None:
+        st.image(
+            s["image"], use_container_width=True, caption=s["name"]
+        )
+
+      st.markdown(
+          f"""
+            <div class="card">
+                <h3 style="margin-top: 5px;">{s['name']}</h3>
+                <p><b>التفاصيل:</b> {s['job']}</p>
+                <p style="color: #f0883e; font-size: 14px;"><b>التقييم/الشارة:</b> {s['badge']}</p>
+                <hr style="border-color: #30363d;">
+                <p style="font-size: 13px; color: #8b949e; margin-bottom: 10px;">لعرض اعلانك هنا تواصل مع الاداره: 01127674550</p>
+                <a href="https://wa.me/{s['phone']}" target="_blank" style="background-color: #238636; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">تواصل عبر واتساب 💬</a>
+            </div>
+            """,
+          unsafe_allow_html=True,
+      )
   else:
-    st.warning(
-        "⚠️ جاري تحميل البيانات أو أن الجدول فارغ. تأكد من محتوى تبويب الشيت"
-        " المرتبط."
+    st.info(
+        "لا توجد إعلانات مضافة في هذا القسم والمنطقة حتى الآن. كن أول من يضيف"
+        " إعلان ومنطقة جديدة!"
     )
+
+elif menu == "➕ أضف إعلانك أو منطقتك":
+  st.markdown("### ➕ إضافة إعلان أو منطقة جديدة للدليل")
+  st.info(
+      "املأ البيانات التالية، يمكنك كتابة اسم منطقتك الجديدة مباشرة، وسيتم نشرها"
+      " فوراً!"
+  )
+
+  with st.form("add_service_form"):
+    p_name = st.text_input("اسم صاحب النشاط أو الإعلان:")
+
+    # Clean text input for region to avoid any bugs
+    p_region = st.text_input(
+        "اكتب اسم منطقتك أو مدينتك (مثال: الخانكة، شبرا، المرج، طوخ...):"
+    )
+
+    p_cat = st.selectbox(
+        "اختر القسم:",
+        ["سباك", "سواق توك توك", "صيدليات", "عربية ملاكي", "كافيه", "مطعم", "أخرى"],
+    )
+    p_job = st.text_area("وصف الخدمة أو الإعلان بالتفصيل:")
+
+    p_image_file = st.file_uploader(
+        "ارفع صورة النشاط أو صورتك الشخصية:", type=["jpg", "png", "jpeg"]
+    )
+
+    p_phone = st.text_input(
+        "رقم الواتساب للتواصل (مثال: 201124214831 بدون علامة +):"
+    )
+    p_badge = st.text_input(
+        "الشارة أو التقييم (مثال: مميز ⭐ / معتمد):", value="جديد 🌟"
+    )
+
+    submit_button = st.form_submit_button(
+        label="نشر الإعلان والمنطقة في الدليل مباشرة 🚀"
+    )
+
+    if submit_button:
+      if p_name and p_phone and p_job and p_region:
+        st.session_state["services_list"].append({
+            "region": p_region.strip(),
+            "category": p_cat,
+            "name": p_name,
+            "job": p_job,
+            "image": p_image_file,
+            "phone": p_phone,
+            "badge": p_badge,
+        })
+        st.success(
+            "تم إضافة المنطقة والإعلان بنجاح! انتقل إلى (تصفح الدليل والخدمات)"
+            " لرؤيتها."
+        )
+      else:
+        st.warning(
+            "من فضلك أكمل الحقول الأساسية (الاسم، اسم المنطقة، الوصف، ورقم"
+            " الواتساب)."
+        )
 
 else:
-  st.markdown("---")
-  st.markdown("<h3>➕ إضافة وتعديل المناطق</h3>", unsafe_allow_html=True)
-  st.info(
-      "💡 لإضافة مناطق جديدة تظهر فوراً على التطبيق، قم بإضافتها مباشرة في ملف"
-      " **Google Sheets** الخاص بك، وستظهر هنا لحظياً!"
-  )
+  st.markdown("### ⚙️ لوحة تحكم الإدارة (التحكم في الإعلانات والمناطق)")
+  admin_pass = st.text_input("Gemy@2026", type="password")
+
+  # You can change '1234' to any password you like
+  if admin_pass == "1234":
+    st.success("مرحباً بك يا مدير الموقع! هذه هي جميع الإعلانات المضافة حالياً:")
+
+    if st.session_state["services_list"]:
+      for idx, s in enumerate(st.session_state["services_list"]):
+        st.markdown(f"---")
+        st.write(
+            f"**رقم الإعلان:** {idx + 1} | **الاسم:** {s['name']} |"
+            f" **المنطقة:** {s['region']} | **القسم:** {s['category']}"
+        )
+        st.write(f"**التفاصيل:** {s['job']} | **الهاتف:** {s['phone']}")
+
+        if st.button(f"حذف هذا الإعلان ❌", key=f"del_{idx}"):
+          st.session_state["services_list"].pop(idx)
+          st.rerun()
+    else:
+      st.info("لا توجد إعلانات مضافة حتى الآن.")
+  elif admin_pass != "":
+    st.error("كلمة المرور غير صحيحة!")
+  else:
+    st.info("الرجاء إدخال كلمة المرور لعرض لوحة التحكم. (كلمة المرور التجريبية: 1234)")
