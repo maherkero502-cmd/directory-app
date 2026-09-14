@@ -15,32 +15,26 @@ st.markdown(
     /* البنر الرئيسي للموقع */
     .hero-banner {
         background: linear-gradient(135deg, #1f6feb 0%, #238636 100%);
-        padding: 35px 20px;
+        padding: 30px 20px;
         border-radius: 16px;
         text-align: center;
         color: white;
         margin-bottom: 25px;
         box-shadow: 0 8px 20px rgba(0,0,0,0.5);
     }
-    .hero-banner h1 { font-size: 34px !important; margin-bottom: 8px; color: #ffffff !important; }
-    .hero-banner p { font-size: 17px !important; color: #e6edf3 !important; margin: 0; }
+    .hero-banner h1 { font-size: 32px !important; margin-bottom: 8px; color: #ffffff !important; }
+    .hero-banner p { font-size: 16px !important; color: #e6edf3 !important; margin: 0; }
 
     /* كروت العرض الاحترافية */
     .service-card {
         background-color: #161b22;
-        padding: 22px;
+        padding: 20px;
         border-radius: 14px;
-        margin-bottom: 18px;
+        margin-bottom: 15px;
         border: 1px solid #30363d;
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        transition: transform 0.2s;
-    }
-    .service-card:hover {
-        border-color: #58a6ff;
-        transform: translateY(-2px);
     }
     
-    /* أزرار وتنسيقات النصوص */
     h2, h3, h4 { color: #58a6ff !important; font-weight: bold !important; }
     p, label, span, .stMarkdown { color: #f0f6fc !important; font-size: 16px !important; }
     
@@ -60,17 +54,17 @@ st.markdown(
     """
     <div class="hero-banner">
         <h1>🌟 دليلك في الخير 🌟</h1>
-        <p>المنصة الأجمل والأسرع للبحث عن الخدمات والأنشطة في منطقتك</p>
+        <p>المنصة الأسرع والأسهل للبحث عن الخدمات والأنشطة في منطقتك</p>
     </div>
 """,
     unsafe_allow_html=True,
 )
 
-# رابط الشيت (المناطق والخدمات)
+# رابط الشيت المباشر الخاص بك
 REGIONS_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRo_K44P9J0mEaWBCH_d9_7Mhn3QGAxOKihLiWBVOyPSo8eR20mjgyt-jaclJ045i1jdDVwGwUruvCF/pub?gid=0&single=true&output=csv"
 
 
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=5)
 def load_data(url):
   try:
     df = pd.read_csv(url)
@@ -86,86 +80,73 @@ df_regions = load_data(REGIONS_SHEET_URL)
 app_mode = st.selectbox(
     "القائمة الرئيسية:",
     [
-        "🔍 تصفح الدليل والبحث الذكي",
-        "➕ اطلب إضافة خدمتك أو نشاطك",
-        "🔐 لوحة تحكم الأدمين (الإدارة)",
+        "🔍 تصفح الدليل والخدمات",
+        "➕ اطلب إضافة خدمة أو نشاط جديد",
+        "🔐 لوحة تحكم الأدمين",
     ],
 )
 
-if app_mode == "🔍 تصفح الدليل والبحث الذكي":
+if app_mode == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
-  st.markdown("<h3>🔍 البحث السريع في الدليل</h3>", unsafe_allow_html=True)
+  st.markdown("<h3>🔍 تصفح الخدمات والأنشطة</h3>", unsafe_allow_html=True)
 
   if not df_regions.empty:
-    col_name = (
-        df_regions.columns[0]
-        if len(df_regions.columns) > 0
-        else "اسم المنطقة"
-    )
-    all_regions = df_regions[col_name].dropna().astype(str).unique().tolist()
+    # جلب أول عمود كمرجع للمنطقة أو النشاط
+    col_name = df_regions.columns[0]
+    all_items = df_regions[col_name].dropna().astype(str).unique().tolist()
 
-    selected_region = st.selectbox(
-        "اختر أو ابحث عن منطقتك:",
-        ["اختر المنطقة..."] + all_regions,
+    selected_item = st.selectbox(
+        "اختر أو ابحث:", ["اختر من القائمة..."] + all_items
     )
 
-    if selected_region != "اختر المنطقة...":
+    if selected_item != "اختر من القائمة...":
       st.markdown(f"---")
-      st.markdown(f"<h2>📍 نتائج خدمات منطقة: {selected_region}</h2>", unsafe_allow_html=True)
+      st.markdown(f"<h2>📍 تفاصيل العنصر: {selected_item}</h2>", unsafe_allow_html=True)
 
       filtered_data = df_regions[
-          df_regions[col_name].astype(str) == selected_region
+          df_regions[col_name].astype(str) == selected_item
       ]
 
       for idx, row in filtered_data.iterrows():
-        st.markdown(
-            f"""
-                <div class="service-card">
-                    <h4>🏢 النشاط / الخدمة: {row.get(df_regions.columns[1], 'خدمة عامة')}</h4>
-                    <p><b>📞 رقم التواصل / الواتساب:</b> {row.get(df_regions.columns[2], 'غير متوفر')}</p>
-                    <p><b>📝 التفاصيل:</b> {row.get(df_regions.columns[3], 'لا توجد تفاصيل إضافية')}</p>
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        card_html = "<div class='service-card'>"
+        for col in df_regions.columns:
+          val = row[col]
+          if pd.notna(val):
+            card_html += f"<p><b>{col}:</b> {val}</p>"
+        card_html += "</div>"
+        st.markdown(card_html, unsafe_allow_html=True)
     else:
-      st.info("💡 يرجى اختيار المنطقة من القائمة أعلاه لعرض الخدمات المتاحة.")
+      st.info("💡 اختر عنصراً من القائمة أعلاه لعرض التفاصيل الكاملة.")
   else:
-    st.warning("⚠️ جدول البيانات فارغ حالياً، بانتظار إضافات أصحاب الخدمات!")
+    st.warning(
+        "⚠️ جدول البيانات فارغ حالياً أو بانتظار إضافات جديدة من الأنشطة."
+    )
 
-elif app_mode == "➕ اطلب إضافة خدمتك أو نشاطك":
+elif app_mode == "➕ اطلب إضافة خدمة أو نشاط جديد":
   st.markdown("---")
   st.markdown(
-      "<h3>📝 نموذج تسجيل خدمة أو نشاط جديد في الدليل</h3>",
-      unsafe_allow_html=True,
+      "<h3>📝 نموذج تسجيل خدمة أو نشاط جديد</h3>", unsafe_allow_html=True
   )
   st.markdown(
-      "<p style='color: #8b949e;'>أدخل بيانات نشاطك بدقة، وستظهر في الدليل"
-      " فور اعتمادها.</p>",
+      "<p style='color: #8b949e;'>أضف بيانات نشاطك بكل سهولة لتظهر في الدليل.</p>",
       unsafe_allow_html=True,
   )
 
   with st.form("add_service_form"):
     owner_name = st.text_input(
-        "اسم المسؤول أو صاحب النشاط:", placeholder="مثال: محمد أحمد"
+        "اسم صاحب النشاط / المسؤول:", placeholder="مثال: أحمد محمد"
     )
     service_name = st.text_input(
-        "اسم النشاط أو الخدمة:", placeholder="مثال: صيدلية الشفاء / مطعم البرنس"
+        "اسم الخدمة أو النشاط:", placeholder="مثال: صيدلية الشفاء / مطعم البرنس"
     )
     region_name = st.text_input(
-        "المنطقة / الحي:", placeholder="مثال: الخانكة - الشارع الرئيسي"
+        "المنطقة أو الحي:", placeholder="مثال: الخانكة - الشارع العمومي"
     )
     phone_number = st.text_input(
-        "رقم الواتساب أو الاتصال:", placeholder="مثال: 01127674550"
-    )
-    description = st.text_area(
-        "تفاصيل الخدمة أو العروض:",
-        placeholder=(
-            "اكتب نبذة مختصرة عن الخدمات المقدمة أو أي خصومات متاحة..."
-        ),
+        "رقم الواتساب أو التواصل:", placeholder="مثال: 01127674550"
     )
 
-    submit_btn = st.form_submit_button("إرسال الخدمة للمراجعة 🚀")
+    submit_btn = st.form_submit_button("إرسال الخدمة للدليل 🚀")
 
     if submit_btn:
       if (
@@ -175,35 +156,27 @@ elif app_mode == "➕ اطلب إضافة خدمتك أو نشاطك":
           and phone_number
       ):
         st.success(
-            "🎉 تم إرسال طلبك بنجاح! سيتم مراجعته وإضافته قريباً للدليل."
+            "🎉 تم تسجيل طلبك بنجاح! سيتم مراجعته وإضافته في أسرع وقت."
         )
       else:
-        st.error("⚠️ يرجى استكمال الحقول الأساسية المطلوبة.")
+        st.error("⚠️ يرجى ملء كافة الحقول المطلوبة بشكل صحيح.")
 
 else:
   st.markdown("---")
-  st.markdown("<h3>🔐 لوحة تحكم الإدارة (الإعلانات والمناطق)</h3>", unsafe_allow_html=True)
-  st.markdown(
-      "<p style='color: #58a6ff; font-size: 15px;'>كلمة المرور الخاصة بالدخول:"
-      " <b>Gemy@2026</b></p>",
-      unsafe_allow_html=True,
-  )
-
+  st.markdown("<h3>🔐 لوحة تحكم الإدارة (الأدمين)</h3>", unsafe_allow_html=True)
   admin_pass = st.text_input(
-      "أدخل كلمة مرور الأدمين:",
-      type="password",
-      placeholder="اكتب كلمة المرور هنا...",
+      "كلمة المرور:", type="password", placeholder="اكتب كلمة المرور..."
   )
 
   if admin_pass == "Gemy@2026":
-    st.success("✅ تم تسجيل الدخول بنجاح يا كيمو.")
+    st.success("✅ أهلاً بك يا كيمو، تم تسجيل الدخول بنجاح.")
     st.markdown("---")
-    st.markdown("<h4>⚙️ إدارة محتوى الشيت الحالي:</h4>", unsafe_allow_html=True)
+    st.markdown("<h4>📋 البيانات الحالية في الشيت:</h4>", unsafe_allow_html=True)
     if not df_regions.empty:
       st.dataframe(df_regions, use_container_width=True)
     else:
-      st.info("الشيت فارغ حالياً تماماً وجاهز لاستقبال البيانات الجديدة.")
+      st.info("الشيت فارغ تماماً حالياً.")
   elif admin_pass:
     st.error("❌ كلمة المرور غير صحيحة.")
   else:
-    st.info("💡 برجاء إدخال كلمة المرور الصحيحة المذكورة أعلاه لفتح اللوحة.")
+    st.info("💡 برجاء إدخال كلمة المرور (Gemy@2026) لفتح اللوحة.")
