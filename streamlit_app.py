@@ -1,212 +1,209 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
+# إعداد الصفحة وتكوين العرض
 st.set_page_config(
-    page_title="دليل خدمات منطقتك", page_icon="📍", layout="centered"
+    page_title="دليلك في الخير", page_icon="🌟", layout="centered"
 )
 
-# Dark Theme & RTL CSS Support
+# تصميم وتنسيق CSS بروفيشنال وفخم (Dark Theme عصري)
 st.markdown(
     """
     <style>
-    .stApp { background-color: #0e1117; color: #ffffff; direction: rtl; text-align: right; }
-    .card { background-color: #161b22; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #30363d; box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
-    .ad-banner { background: linear-gradient(135deg, #1f6feb, #238636); padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 20px; color: white; font-weight: bold; }
-    .stSelectbox label, .stTextInput label, .stTextArea label, .stFileUploader label { color: #58a6ff; font-weight: bold; }
+    .stApp { background-color: #0b0f19; color: #ffffff; direction: rtl; text-align: right; }
+    
+    /* البنر الرئيسي للموقع */
+    .hero-banner {
+        background: linear-gradient(135deg, #1f6feb 0%, #238636 100%);
+        padding: 35px 20px;
+        border-radius: 16px;
+        text-align: center;
+        color: white;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+    .hero-banner h1 { font-size: 34px !important; margin-bottom: 8px; color: #ffffff !important; }
+    .hero-banner p { font-size: 17px !important; color: #e6edf3 !important; margin: 0; }
+
+    /* كروت العرض الاحترافية */
+    .service-card {
+        background-color: #161b22;
+        padding: 22px;
+        border-radius: 14px;
+        margin-bottom: 18px;
+        border: 1px solid #30363d;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: transform 0.2s;
+    }
+    .service-card:hover {
+        border-color: #58a6ff;
+        transform: translateY(-2px);
+    }
+    
+    /* أزرار وتنسيقات النصوص */
+    h2, h3, h4 { color: #58a6ff !important; font-weight: bold !important; }
+    p, label, span, .stMarkdown { color: #f0f6fc !important; font-size: 16px !important; }
+    
+    .stTextInput input, .stSelectbox select, .stTextArea textarea {
+        background-color: #161b22 !important;
+        color: #ffffff !important;
+        border: 1px solid #30363d !important;
+        border-radius: 8px !important;
+    }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# App Header & Logo Display
-st.markdown(
-    "<h1 style='text-align: center;'>📍 دليل خدمات منطقتك</h1>",
-    unsafe_allow_html=True,
-)
-
-try:
-  st.image("logo.jpg", use_container_width=True)
-except:
-  st.markdown(
-      "<h3 style='text-align: center; color: #58a6ff;'>دليلك في الخير</h3>",
-      unsafe_allow_html=True,
-  )
-
-st.markdown(
-    "<p style='text-align: center; color: #8b949e; font-size: 16px;'>خدمات"
-    " منطقتك وكل المدن في مكان واحد 🌟</p>",
-    unsafe_allow_html=True,
-)
-
-# Professional Ad Space Banner
+# واجهة البنر
 st.markdown(
     """
-    <div class="ad-banner">
-        📢 لعرض إعلانك أو نشاطك هنا بشكل مميز، تواصل مع الإدارة عبر الواتساب: 01127674550
+    <div class="hero-banner">
+        <h1>🌟 دليلك في الخير 🌟</h1>
+        <p>المنصة الأجمل والأسرع للبحث عن الخدمات والأنشطة في منطقتك</p>
     </div>
 """,
     unsafe_allow_html=True,
 )
 
-# Initialize Session State with a default storage list
-if "services_list" not in st.session_state:
-  st.session_state["services_list"] = [
-      {
-          "region": "الخانكة",
-          "category": "صيدليات",
-          "name": "صيدلية الشفاء",
-          "job": "خدمة أدوية ومستحضرات تجميل طوال اليوم",
-          "image": None,
-          "phone": "201124214831",
-          "badge": "معتمد ⭐",
-      }
-  ]
+# رابط الشيت (المناطق والخدمات)
+REGIONS_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRo_K44P9J0mEaWBCH_d9_7Mhn3QGAxOKihLiWBVOyPSo8eR20mjgyt-jaclJ045i1jdDVwGwUruvCF/pub?gid=0&single=true&output=csv"
 
-# Navigation Menu (Including Admin Dashboard for you)
-menu = st.selectbox(
+
+@st.cache_data(ttl=10)
+def load_data(url):
+  try:
+    df = pd.read_csv(url)
+    df.columns = df.columns.str.strip()
+    return df
+  except:
+    return pd.DataFrame()
+
+
+df_regions = load_data(REGIONS_SHEET_URL)
+
+# القائمة الرئيسية للموقع
+app_mode = st.selectbox(
     "القائمة الرئيسية:",
     [
-        "🔍 تصفح الدليل والخدمات",
-        "➕ أضف إعلانك أو منطقتك",
-        "⚙️ لوحة تحكم الإدارة (خاصة بك)",
+        "🔍 تصفح الدليل والبحث الذكي",
+        "➕ اطلب إضافة خدمتك أو نشاطك",
+        "🔐 لوحة تحكم الأدمين (الإدارة)",
     ],
 )
 
-if menu == "🔍 تصفح الدليل والخدمات":
+if app_mode == "🔍 تصفح الدليل والبحث الذكي":
   st.markdown("---")
+  st.markdown("<h3>🔍 البحث السريع في الدليل</h3>", unsafe_allow_html=True)
 
-  existing_regions = list(
-      set([s["region"] for s in st.session_state["services_list"]])
-  )
-  selected_region = st.selectbox(
-      "اختر المنطقة للتصفح:", existing_regions if existing_regions else ["الخانكة"]
-  )
+  if not df_regions.empty:
+    col_name = (
+        df_regions.columns[0]
+        if len(df_regions.columns) > 0
+        else "اسم المنطقة"
+    )
+    all_regions = df_regions[col_name].dropna().astype(str).unique().tolist()
 
-  categories = [
-      "سباك",
-      "سواق توك توك",
-      "صيدليات",
-      "عربية ملاكي",
-      "كافيه",
-      "مطعم",
-      "أخرى",
-  ]
-  selected_category = st.selectbox("اختر القسم:", categories)
-
-  st.markdown(f"### نتائج البحث في {selected_region} - {selected_category}")
-
-  matched_services = [
-      s
-      for s in st.session_state["services_list"]
-      if s["region"] == selected_region and s["category"] == selected_category
-  ]
-
-  if matched_services:
-    for s in matched_services:
-      if s["image"] is not None:
-        st.image(
-            s["image"], use_container_width=True, caption=s["name"]
-        )
-
-      st.markdown(
-          f"""
-            <div class="card">
-                <h3 style="margin-top: 5px;">{s['name']}</h3>
-                <p><b>التفاصيل:</b> {s['job']}</p>
-                <p style="color: #f0883e; font-size: 14px;"><b>التقييم/الشارة:</b> {s['badge']}</p>
-                <hr style="border-color: #30363d;">
-                <p style="font-size: 13px; color: #8b949e; margin-bottom: 10px;">لعرض اعلانك هنا تواصل مع الاداره: 01127674550</p>
-                <a href="https://wa.me/{s['phone']}" target="_blank" style="background-color: #238636; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">تواصل عبر واتساب 💬</a>
-            </div>
-            """,
-          unsafe_allow_html=True,
-      )
-  else:
-    st.info(
-        "لا توجد إعلانات مضافة في هذا القسم والمنطقة حتى الآن. كن أول من يضيف"
-        " إعلان ومنطقة جديدة!"
+    selected_region = st.selectbox(
+        "اختر أو ابحث عن منطقتك:",
+        ["اختر المنطقة..."] + all_regions,
     )
 
-elif menu == "➕ أضف إعلانك أو منطقتك":
-  st.markdown("### ➕ إضافة إعلان أو منطقة جديدة للدليل")
-  st.info(
-      "املأ البيانات التالية، يمكنك كتابة اسم منطقتك الجديدة مباشرة، وسيتم نشرها"
-      " فوراً!"
+    if selected_region != "اختر المنطقة...":
+      st.markdown(f"---")
+      st.markdown(f"<h2>📍 نتائج خدمات منطقة: {selected_region}</h2>", unsafe_allow_html=True)
+
+      filtered_data = df_regions[
+          df_regions[col_name].astype(str) == selected_region
+      ]
+
+      for idx, row in filtered_data.iterrows():
+        st.markdown(
+            f"""
+                <div class="service-card">
+                    <h4>🏢 النشاط / الخدمة: {row.get(df_regions.columns[1], 'خدمة عامة')}</h4>
+                    <p><b>📞 رقم التواصل / الواتساب:</b> {row.get(df_regions.columns[2], 'غير متوفر')}</p>
+                    <p><b>📝 التفاصيل:</b> {row.get(df_regions.columns[3], 'لا توجد تفاصيل إضافية')}</p>
+                </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+      st.info("💡 يرجى اختيار المنطقة من القائمة أعلاه لعرض الخدمات المتاحة.")
+  else:
+    st.warning("⚠️ جدول البيانات فارغ حالياً، بانتظار إضافات أصحاب الخدمات!")
+
+elif app_mode == "➕ اطلب إضافة خدمتك أو نشاطك":
+  st.markdown("---")
+  st.markdown(
+      "<h3>📝 نموذج تسجيل خدمة أو نشاط جديد في الدليل</h3>",
+      unsafe_allow_html=True,
+  )
+  st.markdown(
+      "<p style='color: #8b949e;'>أدخل بيانات نشاطك بدقة، وستظهر في الدليل"
+      " فور اعتمادها.</p>",
+      unsafe_allow_html=True,
   )
 
   with st.form("add_service_form"):
-    p_name = st.text_input("اسم صاحب النشاط أو الإعلان:")
-
-    # Clean text input for region to avoid any bugs
-    p_region = st.text_input(
-        "اكتب اسم منطقتك أو مدينتك (مثال: الخانكة، شبرا، المرج، طوخ...):"
+    owner_name = st.text_input(
+        "اسم المسؤول أو صاحب النشاط:", placeholder="مثال: محمد أحمد"
+    )
+    service_name = st.text_input(
+        "اسم النشاط أو الخدمة:", placeholder="مثال: صيدلية الشفاء / مطعم البرنس"
+    )
+    region_name = st.text_input(
+        "المنطقة / الحي:", placeholder="مثال: الخانكة - الشارع الرئيسي"
+    )
+    phone_number = st.text_input(
+        "رقم الواتساب أو الاتصال:", placeholder="مثال: 01127674550"
+    )
+    description = st.text_area(
+        "تفاصيل الخدمة أو العروض:",
+        placeholder=(
+            "اكتب نبذة مختصرة عن الخدمات المقدمة أو أي خصومات متاحة..."
+        ),
     )
 
-    p_cat = st.selectbox(
-        "اختر القسم:",
-        ["سباك", "سواق توك توك", "صيدليات", "عربية ملاكي", "كافيه", "مطعم", "أخرى"],
-    )
-    p_job = st.text_area("وصف الخدمة أو الإعلان بالتفصيل:")
+    submit_btn = st.form_submit_button("إرسال الخدمة للمراجعة 🚀")
 
-    p_image_file = st.file_uploader(
-        "ارفع صورة النشاط أو صورتك الشخصية:", type=["jpg", "png", "jpeg"]
-    )
-
-    p_phone = st.text_input(
-        "رقم الواتساب للتواصل (مثال: 201124214831 بدون علامة +):"
-    )
-    p_badge = st.text_input(
-        "الشارة أو التقييم (مثال: مميز ⭐ / معتمد):", value="جديد 🌟"
-    )
-
-    submit_button = st.form_submit_button(
-        label="نشر الإعلان والمنطقة في الدليل مباشرة 🚀"
-    )
-
-    if submit_button:
-      if p_name and p_phone and p_job and p_region:
-        st.session_state["services_list"].append({
-            "region": p_region.strip(),
-            "category": p_cat,
-            "name": p_name,
-            "job": p_job,
-            "image": p_image_file,
-            "phone": p_phone,
-            "badge": p_badge,
-        })
+    if submit_btn:
+      if (
+          owner_name
+          and service_name
+          and region_name
+          and phone_number
+      ):
         st.success(
-            "تم إضافة المنطقة والإعلان بنجاح! انتقل إلى (تصفح الدليل والخدمات)"
-            " لرؤيتها."
+            "🎉 تم إرسال طلبك بنجاح! سيتم مراجعته وإضافته قريباً للدليل."
         )
       else:
-        st.warning(
-            "من فضلك أكمل الحقول الأساسية (الاسم، اسم المنطقة، الوصف، ورقم"
-            " الواتساب)."
-        )
+        st.error("⚠️ يرجى استكمال الحقول الأساسية المطلوبة.")
 
 else:
-  st.markdown("### ⚙️ لوحة تحكم الإدارة (التحكم في الإعلانات والمناطق)")
-  admin_pass = st.text_input("Gemy@2026", type="password")
+  st.markdown("---")
+  st.markdown("<h3>🔐 لوحة تحكم الإدارة (الإعلانات والمناطق)</h3>", unsafe_allow_html=True)
+  st.markdown(
+      "<p style='color: #58a6ff; font-size: 15px;'>كلمة المرور الخاصة بالدخول:"
+      " <b>Gemy@2026</b></p>",
+      unsafe_allow_html=True,
+  )
 
-  # You can change '1234' to any password you like
-  if admin_pass == "1234":
-    st.success("مرحباً بك يا مدير الموقع! هذه هي جميع الإعلانات المضافة حالياً:")
+  admin_pass = st.text_input(
+      "أدخل كلمة مرور الأدمين:",
+      type="password",
+      placeholder="اكتب كلمة المرور هنا...",
+  )
 
-    if st.session_state["services_list"]:
-      for idx, s in enumerate(st.session_state["services_list"]):
-        st.markdown(f"---")
-        st.write(
-            f"**رقم الإعلان:** {idx + 1} | **الاسم:** {s['name']} |"
-            f" **المنطقة:** {s['region']} | **القسم:** {s['category']}"
-        )
-        st.write(f"**التفاصيل:** {s['job']} | **الهاتف:** {s['phone']}")
-
-        if st.button(f"حذف هذا الإعلان ❌", key=f"del_{idx}"):
-          st.session_state["services_list"].pop(idx)
-          st.rerun()
+  if admin_pass == "Gemy@2026":
+    st.success("✅ تم تسجيل الدخول بنجاح يا كيمو.")
+    st.markdown("---")
+    st.markdown("<h4>⚙️ إدارة محتوى الشيت الحالي:</h4>", unsafe_allow_html=True)
+    if not df_regions.empty:
+      st.dataframe(df_regions, use_container_width=True)
     else:
-      st.info("لا توجد إعلانات مضافة حتى الآن.")
-  elif admin_pass != "":
-    st.error("كلمة المرور غير صحيحة!")
+      st.info("الشيت فارغ حالياً تماماً وجاهز لاستقبال البيانات الجديدة.")
+  elif admin_pass:
+    st.error("❌ كلمة المرور غير صحيحة.")
   else:
-    st.info("الرجاء إدخال كلمة المرور لعرض لوحة التحكم. (كلمة المرور التجريبية: 1234)")
+    st.info("💡 برجاء إدخال كلمة المرور الصحيحة المذكورة أعلاه لفتح اللوحة.")
