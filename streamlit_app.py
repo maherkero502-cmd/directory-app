@@ -5,6 +5,27 @@ st.set_page_config(
     page_title="دليل خدمات منطقتك", page_icon="📍", layout="centered"
 )
 
+
+# Smart Text Normalization function to handle (ة/ه), (أ/إ/آ/ا), and spaces
+def normalize_text(text):
+  if not text:
+    return ""
+  text = str(text).strip().lower()
+  # Normalize Arabic letters variants
+  text = text.replace("ة", "ه")
+  text = (
+      text.replace("أ", "ا")
+      .replace("إ", "ا")
+      .replace("آ", "ا")
+      .replace("ى", "ي")
+  )
+  # Remove "ال" prefix if attached to words for better matching
+  words = [
+      w[2:] if w.startswith("ل") and len(w) > 3 else w for w in text.split()
+  ]
+  return " ".join(words)
+
+
 # Professional CSS for Dark Theme, Clear Large Fonts, and 4x6 Thumbnails
 st.markdown(
     """
@@ -56,7 +77,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Initialize Session State securely with persistent storage
+# Initialize Session State securely with ALL original starter services (including Al-Khankah, Al-Marg, etc.)
 if "services_list" not in st.session_state:
   st.session_state["services_list"] = [
       {
@@ -67,7 +88,25 @@ if "services_list" not in st.session_state:
           "image": None,
           "phone": "201124214831",
           "badge": "معتمد ⭐",
-      }
+      },
+      {
+          "region": "المرج",
+          "category": "مستلزمات منزلية",
+          "name": "محل البركة",
+          "job": "أدوات منزلية وخردوات وأسعار خاصة",
+          "image": None,
+          "phone": "201124214831",
+          "badge": "موصى به ⭐",
+      },
+      {
+          "region": "الخانكة",
+          "category": "سوبر ماركت",
+          "name": "ماركت الخير",
+          "job": "جميع المواد الغذائية والخضار والفاكهة",
+          "image": None,
+          "phone": "201124214831",
+          "badge": "مميز 🌟",
+      },
   ]
 
 if "pending_services" not in st.session_state:
@@ -89,29 +128,34 @@ menu = st.selectbox(
 
 if menu == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
-  st.markdown("<h2>🔍 تصفح الخدمات المعتمدة والبحث السريع</h2>", unsafe_allow_html=True)
+  st.markdown("<h2>🔍 تصفح الخدمات المعتمدة والبحث الذكي</h2>", unsafe_allow_html=True)
 
   if st.session_state["services_list"]:
-    # Quick Search Bar Feature
+    # Smart Search Bar Feature supporting variants (ة/ه, etc.)
     search_query = st.text_input(
-        "🔎 البحث السريع (اكتب اسم الخدمة أو النشاط للبحث الفوري):", ""
+        "🔎 البحث السريع الذكي (اكتب اسم المنطقة مثل: الخانكة، خانكه، المرج... أو"
+        " اسم الخدمة):",
+        "",
     )
 
     if search_query.strip() != "":
+      norm_query = normalize_text(search_query)
       st.markdown(
-          f"<h3>نتائج البحث السريع عن: '{search_query}'</h3>",
-          unsafe_allow_html=True,
+          f"<h3>نتائج البحث عن: '{search_query}'</h3>", unsafe_allow_html=True
       )
-      matched_services = [
-          s
-          for s in st.session_state["services_list"]
-          if search_query.lower() in s["name"].lower()
-          or search_query.lower() in s["job"].lower()
-          or search_query.lower() in s["category"].lower()
-          or search_query.lower() in s["region"].lower()
-      ]
+
+      matched_services = []
+      for s in st.session_state["services_list"]:
+        combined_text = (
+            f"{s['name']} {s['job']} {s['category']} {s['region']}"
+        )
+        norm_combined = normalize_text(combined_text)
+
+        # Check if query words match normalized text flexibly
+        if any(term in norm_combined for term in norm_query.split()):
+          matched_services.append(s)
     else:
-      # Filter by Region and Category if no direct search query
+      # Filter by Region and Category smoothly
       col_r, col_c = st.columns(2)
       with col_r:
         existing_regions = list(
@@ -161,6 +205,7 @@ if menu == "🔍 تصفح الدليل والخدمات":
                     <div>{img_html}</div>
                     <div style="flex-grow: 1;">
                         <h3 style="margin-top: 0; color: #58a6ff;">{s['name']}</h3>
+                        <p style="color: #ffffff;"><b>المنطقة:</b> {s['region']} | <b>القسم:</b> {s['category']}</p>
                         <p style="color: #ffffff;"><b>التفاصيل:</b> {s['job']}</p>
                         <p style="color: #7ee787; font-size: 15px;"><b>التقييم:</b> {s['badge']}</p>
                         <hr style="border-color: #30363d;">
@@ -187,7 +232,7 @@ elif menu == "➕ إضافة خدمة أو نشاط جديد":
 
   with st.form("add_service_form"):
     p_name = st.text_input("اسم صاحب النشاط أو الخدمة:")
-    p_region = st.text_input("اكتب اسم منطقتك (مثال: الخانكة):")
+    p_region = st.text_input("اكتب اسم منطقتك (مثال: الخانكة أو المرج):")
     p_cat = st.text_input(
         "اكتب اسم الخدمة أو الوظيفة (مثال: سباك، صيدلية...):"
     )
