@@ -56,7 +56,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Initialize Session State
+# Initialize Session State securely with persistent storage
 if "services_list" not in st.session_state:
   st.session_state["services_list"] = [
       {
@@ -89,65 +89,90 @@ menu = st.selectbox(
 
 if menu == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
-  st.markdown("<h2>🔍 تصفح الخدمات المعتمدة</h2>", unsafe_allow_html=True)
+  st.markdown("<h2>🔍 تصفح الخدمات المعتمدة والبحث السريع</h2>", unsafe_allow_html=True)
 
   if st.session_state["services_list"]:
-    existing_regions = list(
-        set([s["region"] for s in st.session_state["services_list"]])
-    )
-    selected_region = st.selectbox("اختر المنطقة للتصفح:", existing_regions)
-
-    existing_categories = list(
-        set(
-            [
-                s["category"]
-                for s in st.session_state["services_list"]
-                if s["region"] == selected_region
-            ]
-        )
-    )
-    selected_category = st.selectbox(
-        "اختر القسم أو الخدمة:", existing_categories
+    # Quick Search Bar Feature
+    search_query = st.text_input(
+        "🔎 البحث السريع (اكتب اسم الخدمة أو النشاط للبحث الفوري):", ""
     )
 
-    st.markdown(
-        f"<h3>نتائج البحث في {selected_region} - {selected_category}</h3>",
-        unsafe_allow_html=True,
-    )
-
-    matched_services = [
-        s
-        for s in st.session_state["services_list"]
-        if s["region"] == selected_region and s["category"] == selected_category
-    ]
-
-    for s in matched_services:
-      img_html = ""
-      if s["image"] is not None:
-        import base64
-
-        if isinstance(s["image"], bytes):
-          encoded_img = base64.b64encode(s["image"]).decode()
-          img_html = f"<img src='data:image/jpeg;base64,{encoded_img}' class='thumb-img'>"
-        else:
-          img_html = f"<img src='{s['image']}' class='thumb-img'>"
-
+    if search_query.strip() != "":
       st.markdown(
-          f"""
-            <div class="card" style="display: flex; gap: 20px; align-items: center;">
-                <div>{img_html}</div>
-                <div style="flex-grow: 1;">
-                    <h3 style="margin-top: 0; color: #58a6ff;">{s['name']}</h3>
-                    <p style="color: #ffffff;"><b>التفاصيل:</b> {s['job']}</p>
-                    <p style="color: #7ee787; font-size: 15px;"><b>التقييم:</b> {s['badge']}</p>
-                    <hr style="border-color: #30363d;">
-                    <p style="font-size: 13px; color: #8b949e;">لعرض اعلانك هنا تواصل مع الاداره: 01127674550</p>
-                    <a href="https://wa.me/{s['phone']}" target="_blank" style="background-color: #238636; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">تواصل عبر واتساب 💬</a>
-                </div>
-            </div>
-            """,
+          f"<h3>نتائج البحث السريع عن: '{search_query}'</h3>",
           unsafe_allow_html=True,
       )
+      matched_services = [
+          s
+          for s in st.session_state["services_list"]
+          if search_query.lower() in s["name"].lower()
+          or search_query.lower() in s["job"].lower()
+          or search_query.lower() in s["category"].lower()
+          or search_query.lower() in s["region"].lower()
+      ]
+    else:
+      # Filter by Region and Category if no direct search query
+      col_r, col_c = st.columns(2)
+      with col_r:
+        existing_regions = list(
+            set([s["region"] for s in st.session_state["services_list"]])
+        )
+        selected_region = st.selectbox("اختر المنطقة للتصفح:", existing_regions)
+      with col_c:
+        existing_categories = list(
+            set(
+                [
+                    s["category"]
+                    for s in st.session_state["services_list"]
+                    if s["region"] == selected_region
+                ]
+            )
+        )
+        selected_category = st.selectbox(
+            "اختر القسم أو الخدمة:", existing_categories
+        )
+
+      st.markdown(
+          f"<h3>الخدمات المتاحة في {selected_region} - {selected_category}</h3>",
+          unsafe_allow_html=True,
+      )
+      matched_services = [
+          s
+          for s in st.session_state["services_list"]
+          if s["region"] == selected_region
+          and s["category"] == selected_category
+      ]
+
+    if matched_services:
+      for s in matched_services:
+        img_html = ""
+        if s["image"] is not None:
+          import base64
+
+          if isinstance(s["image"], bytes):
+            encoded_img = base64.b64encode(s["image"]).decode()
+            img_html = f"<img src='data:image/jpeg;base64,{encoded_img}' class='thumb-img'>"
+          else:
+            img_html = f"<img src='{s['image']}' class='thumb-img'>"
+
+        st.markdown(
+            f"""
+                <div class="card" style="display: flex; gap: 20px; align-items: center;">
+                    <div>{img_html}</div>
+                    <div style="flex-grow: 1;">
+                        <h3 style="margin-top: 0; color: #58a6ff;">{s['name']}</h3>
+                        <p style="color: #ffffff;"><b>التفاصيل:</b> {s['job']}</p>
+                        <p style="color: #7ee787; font-size: 15px;"><b>التقييم:</b> {s['badge']}</p>
+                        <hr style="border-color: #30363d;">
+                        <p style="font-size: 13px; color: #8b949e;">لعرض اعلانك هنا تواصل مع الاداره: 01127674550</p>
+                        <a href="https://wa.me/{s['phone']}" target="_blank" style="background-color: #238636; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">تواصل عبر واتساب 💬</a>
+                    </div>
+                </div>
+                """,
+            unsafe_allow_html=True,
+        )
+    else:
+      st.info("لا توجد خدمات مطابقة لبحثك.")
   else:
     st.info("لا توجد خدمات معتمدة حالياً في الدليل.")
 
@@ -162,9 +187,7 @@ elif menu == "➕ إضافة خدمة أو نشاط جديد":
 
   with st.form("add_service_form"):
     p_name = st.text_input("اسم صاحب النشاط أو الخدمة:")
-    p_region = st.text_input(
-        "اكتب اسم منطقتك (مثال: الخانكة، ولو كتبت خطأ سيتم تصليحها):"
-    )
+    p_region = st.text_input("اكتب اسم منطقتك (مثال: الخانكة):")
     p_cat = st.text_input(
         "اكتب اسم الخدمة أو الوظيفة (مثال: سباك، صيدلية...):"
     )
@@ -254,7 +277,6 @@ else:
         )
         st.write(f"**التفاصيل:** {s['job']} | **الهاتف:** {s['phone']}")
 
-        # Action buttons for admin
         col1, col2 = st.columns(2)
         with col1:
           if st.button(
@@ -270,13 +292,9 @@ else:
             st.success("تم رفض الطلب.")
             st.rerun()
 
-        # Option to edit before publishing (fixes misspellings like "خانكي" to "الخانكة")
         with st.expander(f"✏️ تعديل الخطأ الإملائي قبل النشر للطلب #{idx + 1}"):
           with st.form(key=f"edit_pending_form_{idx}"):
-            new_region = st.text_input(
-                "تعديل المنطقة (مثل تصحيح خانكي إلى الخانكة):",
-                value=s["region"],
-            )
+            new_region = st.text_input("تعديل المنطقة:", value=s["region"])
             new_cat = st.text_input("تعديل القسم:", value=s["category"])
             new_name = st.text_input("تعديل الاسم:", value=s["name"])
             new_job = st.text_area("تعديل الوصف:", value=s["job"])
