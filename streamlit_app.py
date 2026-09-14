@@ -56,7 +56,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Session State Initialization
+# Initialize Session State
 if "services_list" not in st.session_state:
   st.session_state["services_list"] = [
       {
@@ -65,9 +65,8 @@ if "services_list" not in st.session_state:
           "name": "صيدلية الشفاء",
           "job": "خدمة أدوية ومستحضرات تجميل طوال اليوم",
           "image": None,
-          "phone": "201127674550",
+          "phone": "201124214831",
           "badge": "معتمد ⭐",
-          "status": "approved",
       }
   ]
 
@@ -84,7 +83,7 @@ menu = st.selectbox(
         "🔍 تصفح الدليل والخدمات",
         "➕ إضافة خدمة أو نشاط جديد",
         "⭐ طلب إعلان على الصفحة الرئيسية",
-        "⚙️ لوحة تحكم الإدارة (مراجعة وتعديل)",
+        "⚙️ لوحة تحكم الإدارة (مراجعة وتعديل ونشر)",
     ],
 )
 
@@ -92,21 +91,17 @@ if menu == "🔍 تصفح الدليل والخدمات":
   st.markdown("---")
   st.markdown("<h2>🔍 تصفح الخدمات المعتمدة</h2>", unsafe_allow_html=True)
 
-  approved_services = [
-      s
-      for s in st.session_state["services_list"]
-      if s.get("status") == "approved"
-  ]
-
-  if approved_services:
-    existing_regions = list(set([s["region"] for s in approved_services]))
+  if st.session_state["services_list"]:
+    existing_regions = list(
+        set([s["region"] for s in st.session_state["services_list"]])
+    )
     selected_region = st.selectbox("اختر المنطقة للتصفح:", existing_regions)
 
     existing_categories = list(
         set(
             [
                 s["category"]
-                for s in approved_services
+                for s in st.session_state["services_list"]
                 if s["region"] == selected_region
             ]
         )
@@ -122,14 +117,13 @@ if menu == "🔍 تصفح الدليل والخدمات":
 
     matched_services = [
         s
-        for s in approved_services
+        for s in st.session_state["services_list"]
         if s["region"] == selected_region and s["category"] == selected_category
     ]
 
     for s in matched_services:
       img_html = ""
       if s["image"] is not None:
-        # Saving image display as a 4x6 thumbnail layout
         import base64
 
         if isinstance(s["image"], bytes):
@@ -159,31 +153,32 @@ if menu == "🔍 تصفح الدليل والخدمات":
 
 elif menu == "➕ إضافة خدمة أو نشاط جديد":
   st.markdown("---")
+  st.markdown("<h2>➕ أضف خدمتك أو نشاطك للدليل</h2>", unsafe_allow_html=True)
   st.markdown(
-      "<h2>➕ أضف خدمتك أو نشاطك للدليل</h2>", unsafe_allow_html=True
-  )
-  st.markdown(
-      "<p>املأ بيانات خدمتك، وسيتم إرسالها للإدارة للمراجعة والنشر الفوري.</p>",
+      "<p>املأ بيانات خدمتك، وسيتم إرسالها للإدارة للمراجعة والتأكيد قبل"
+      " النشر.</p>",
       unsafe_allow_html=True,
   )
 
   with st.form("add_service_form"):
     p_name = st.text_input("اسم صاحب النشاط أو الخدمة:")
-    p_region = st.text_input("اكتب اسم منطقتك (مثال: الخانكة، المرج...):")
+    p_region = st.text_input(
+        "اكتب اسم منطقتك (مثال: الخانكة، ولو كتبت خطأ سيتم تصليحها):"
+    )
     p_cat = st.text_input(
-        "اكتب اسم الخدمة أو الوظيفة (مثال: سباك، صيدلية، مطعم...):"
+        "اكتب اسم الخدمة أو الوظيفة (مثال: سباك، صيدلية...):"
     )
     p_job = st.text_area("وصف الخدمة أو الإعلان بالتفصيل:")
     p_image_file = st.file_uploader(
         "ارفع صورة النشاط (صورة مصغرة 4×6):", type=["jpg", "png", "jpeg"]
     )
-    p_phone = st.text_input("رقم الواتساب للتواصل (مثال: 201127674550):")
+    p_phone = st.text_input("رقم الواتساب للتواصل (مثال: 201124214831):")
     p_badge = st.text_input(
         "الشارة أو التقييم المطلوب:", value="موصى به ⭐"
     )
 
     submit_button = st.form_submit_button(
-        label="إرسال الخدمة للإدارة للمراجعة 🚀"
+        label="إرسال الخدمة للإدارة للمراجعة والنشر 🚀"
     )
 
     if submit_button:
@@ -197,10 +192,10 @@ elif menu == "➕ إضافة خدمة أو نشاط جديد":
             "image": img_bytes,
             "phone": p_phone,
             "badge": p_badge,
-            "status": "pending",
         })
         st.success(
-            "تم إرسال خدمتك بنجاح إلى الإدارة! سيتم مراجعتها ونشرها قريباً."
+            "تم إرسال طلبك بنجاح! سيتم مراجعته وتأكيده ونشره بواسطة الإدارة"
+            " قريباً."
         )
       else:
         st.warning("من فضلك أكمل جميع الحقول الأساسية المطلوبة.")
@@ -238,7 +233,7 @@ elif menu == "⭐ طلب إعلان على الصفحة الرئيسية":
 else:
   st.markdown("---")
   st.markdown(
-      "<h2>⚙️ لوحة تحكم الإدارة (مراجعة، تعديل، ورفض الطلبات)</h2>",
+      "<h2>⚙️ لوحة تحكم الإدارة (مراجعة، تعديل وتأكيد النشر)</h2>",
       unsafe_allow_html=True,
   )
 
@@ -248,62 +243,61 @@ else:
   )
 
   if admin_pass == ADMIN_PASSWORD:
-    st.success("مرحباً بك يا كيمو في لوحة التحكم الشاملة!")
+    st.success("مرحباً بك يا كيمو! هذه هي الطلبات الجديدة التي تنتظر مراجعتك:")
 
-    # Section 1: Review Pending Services
-    st.markdown(
-        "<h3>📥 الطلبات المعلقة الجديدة (تنتظر الموافقة أو التعديل)</h3>",
-        unsafe_allow_html=True,
-    )
     if st.session_state["pending_services"]:
       for idx, s in enumerate(st.session_state["pending_services"]):
         st.markdown(f"---")
         st.write(
-            f"**الطلب #{idx + 1}** | **الاسم:** {s['name']} | **المنطقة:**"
-            f" {s['region']} | **القسم:** {s['category']}"
+            f"**طلب معلق #{idx + 1}** | **الاسم:** {s['name']} |"
+            f" **المنطقة:** {s['region']} | **القسم:** {s['category']}"
         )
         st.write(f"**التفاصيل:** {s['job']} | **الهاتف:** {s['phone']}")
 
-        col1, col2, col3 = st.columns(3)
+        # Action buttons for admin
+        col1, col2 = st.columns(2)
         with col1:
-          if st.button(f"موافقة ونشر فوراً ✅", key=f"app_{idx}"):
-            s["status"] = "approved"
+          if st.button(
+              f"تأكيد ونشر مباشر في الدليل ✅", key=f"approve_{idx}"
+          ):
             st.session_state["services_list"].append(s)
             st.session_state["pending_services"].pop(idx)
+            st.success("تم تأكيد النشر وأصبحت الخدمة ظاهرة في الدليل!")
             st.rerun()
         with col2:
-          if st.button(f"رفض الحذف ❌", key=f"rej_{idx}"):
+          if st.button(f"رفض وإلغاء ❌", key=f"reject_{idx}"):
             st.session_state["pending_services"].pop(idx)
-            st.success("تم رفض وحذف الطلب.")
+            st.success("تم رفض الطلب.")
             st.rerun()
-        with col3:
-          if st.button(f"✏️ تعديل الأخطاء الإملائية", key=f"edit_btn_{idx}"):
-            st.session_state[f"editing_{idx}"] = True
 
-        # Editing form if user misspelled something (e.g. "خانكي" instead of "الخانكة")
-        if st.session_state.get(f"editing_{idx}", False):
-          with st.form(key=f"edit_form_{idx}"):
-            new_region = st.text_input("تعديل المنطقة:", value=s["region"])
+        # Option to edit before publishing (fixes misspellings like "خانكي" to "الخانكة")
+        with st.expander(f"✏️ تعديل الخطأ الإملائي قبل النشر للطلب #{idx + 1}"):
+          with st.form(key=f"edit_pending_form_{idx}"):
+            new_region = st.text_input(
+                "تعديل المنطقة (مثل تصحيح خانكي إلى الخانكة):",
+                value=s["region"],
+            )
             new_cat = st.text_input("تعديل القسم:", value=s["category"])
             new_name = st.text_input("تعديل الاسم:", value=s["name"])
             new_job = st.text_area("تعديل الوصف:", value=s["job"])
-            save_edit = st.form_submit_button("حفظ التعديلات ونشرها 💾")
+            save_and_publish = st.form_submit_button(
+                "حفظ التعديلات وتأكيد النشر فوراً 💾🚀"
+            )
 
-            if save_edit:
+            if save_and_publish:
               s["region"] = new_region.strip()
               s["category"] = new_cat.strip()
               s["name"] = new_name.strip()
               s["job"] = new_job.strip()
-              s["status"] = "approved"
               st.session_state["services_list"].append(s)
               st.session_state["pending_services"].pop(idx)
-              st.session_state[f"editing_{idx}"] = False
-              st.success("تم تصحيح وتعديل الخطأ ونشر الخدمة بنجاح!")
+              st.success(
+                  "تم تعديل الخطأ الإملائي وتأكيد نشر الخدمة في الدليل بنجاح!"
+              )
               st.rerun()
     else:
-      st.info("لا توجد طلبات معلقة حالياً.")
+      st.info("لا توجد طلبات معلقة حالياً تنتظر المراجعة.")
 
-    # Section 2: Main Page Ad Requests
     st.markdown("---")
     st.markdown(
         "<h3>⭐ طلبات الإعلانات الرئيسية (اسم ورقم فقط)</h3>",
@@ -324,4 +318,4 @@ else:
   elif admin_pass != "":
     st.error("كلمة المرور غير صحيحة!")
   else:
-    st.info("أدخل كلمة المرور الخاصة بك لعرض الطلبات وإدارتها.")
+    st.info("أدخل كلمة المرور الخاصة بك لعرض الطلبات المعلقة ومراجعتها.")
