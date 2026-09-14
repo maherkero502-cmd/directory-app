@@ -1,4 +1,5 @@
 import pandas as pd
+import requests
 import streamlit as st
 
 # إعداد الصفحة وتكوين العرض
@@ -60,8 +61,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# رابط الشيت المباشر الخاص بك
+# روابط الشيت والـ Apps Script الخاص بك
 REGIONS_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRo_K44P9J0mEaWBCH_d9_7Mhn3QGAxOKihLiWBVOyPSo8eR20mjgyt-jaclJ045i1jdDVwGwUruvCF/pub?gid=0&single=true&output=csv"
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUtpSF0ia-TFPjNSea6bTnI6s-bIUiv0iQ1h84_8m8aSYWp3WX11wmTRIGj-5nYWnYSQ/exec"
 
 
 @st.cache_data(ttl=5)
@@ -91,7 +93,6 @@ if app_mode == "🔍 تصفح الدليل والخدمات":
   st.markdown("<h3>🔍 تصفح الخدمات والأنشطة</h3>", unsafe_allow_html=True)
 
   if not df_regions.empty:
-    # جلب أول عمود كمرجع للمنطقة أو النشاط
     col_name = df_regions.columns[0]
     all_items = df_regions[col_name].dropna().astype(str).unique().tolist()
 
@@ -128,7 +129,8 @@ elif app_mode == "➕ اطلب إضافة خدمة أو نشاط جديد":
       "<h3>📝 نموذج تسجيل خدمة أو نشاط جديد</h3>", unsafe_allow_html=True
   )
   st.markdown(
-      "<p style='color: #8b949e;'>أضف بيانات نشاطك بكل سهولة لتظهر في الدليل.</p>",
+      "<p style='color: #8b949e;'>أضف بيانات نشاطك بكل سهولة لتصل مباشرة للإدارة"
+      " وتظهر في الدليل.</p>",
       unsafe_allow_html=True,
   )
 
@@ -155,9 +157,26 @@ elif app_mode == "➕ اطلب إضافة خدمة أو نشاط جديد":
           and region_name
           and phone_number
       ):
-        st.success(
-            "🎉 تم تسجيل طلبك بنجاح! سيتم مراجعته وإضافته في أسرع وقت."
-        )
+        # إرسال البيانات أوتوماتيك للـ Google Sheet عبر الـ Apps Script
+        payload = {
+            "owner_name": owner_name,
+            "service_name": service_name,
+            "region_name": region_name,
+            "phone_number": phone_number,
+        }
+        try:
+          response = requests.post(APPS_SCRIPT_URL, json=payload)
+          if response.status_code == 200:
+            st.success(
+                "🎉 تم إرسال طلبك بنجاح وسجل في الشيت! سيتم مراجعته وعرضه في"
+                " الدليل."
+            )
+          else:
+            st.warning(
+                "⚠️ تم الإرسال ولكن يرجى التحقق من لوحة التحكم."
+            )
+        except Exception as e:
+          st.error(f"❌ حدث خطأ في الاتصال: {e}")
       else:
         st.error("⚠️ يرجى ملء كافة الحقول المطلوبة بشكل صحيح.")
 
