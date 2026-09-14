@@ -24,7 +24,7 @@ def normalize_text(text):
   return " ".join(words)
 
 
-# Professional CSS for Dark Theme, Clear Large Fonts, and 4x6 Thumbnails
+# Professional CSS for Dark Theme and UI styling
 st.markdown(
     """
     <style>
@@ -33,13 +33,9 @@ st.markdown(
     .ad-banner { background: linear-gradient(135deg, #1f6feb, #238636); padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 20px; color: white; font-weight: bold; font-size: 16px; }
     .info-box { background-color: #1f242c; padding: 12px 18px; border-radius: 8px; border-right: 4px solid #58a6ff; margin-bottom: 20px; font-size: 15px; color: #c9d1d9; }
     
-    /* Clear and Large Text Formatting */
     h1, h2, h3 { color: #58a6ff !important; font-weight: bold !important; }
     p, label, span, .stMarkdown { color: #f0f6fc !important; font-size: 16px !important; }
-    
-    /* 4x6 Thumbnail Image Styling */
     .thumb-img { width: 120px; height: 180px; object-fit: cover; border-radius: 8px; border: 2px solid #30363d; margin-bottom: 10px; }
-    
     .stSelectbox label, .stTextInput label, .stTextArea label, .stFileUploader label { color: #7ee787 !important; font-weight: bold !important; font-size: 17px !important; }
     </style>
 """,
@@ -76,37 +72,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Initialize Session State securely with ALL original starter services
+# Initialize Session State: Clean slate with NO dummy data
 if "services_list" not in st.session_state:
-  st.session_state["services_list"] = [
-      {
-          "region": "الخانكة",
-          "category": "صيدليات",
-          "name": "صيدلية الشفاء",
-          "job": "خدمة أدوية ومستحضرات تجميل طوال اليوم",
-          "image": None,
-          "phone": "201124214831",
-          "badge": "معتمد ⭐",
-      },
-      {
-          "region": "المرج",
-          "category": "مستلزمات منزلية",
-          "name": "محل البركة",
-          "job": "أدوات منزلية وخردوات وأسعار خاصة",
-          "image": None,
-          "phone": "201124214831",
-          "badge": "موصى به ⭐",
-      },
-      {
-          "region": "الخانكة",
-          "category": "سوبر ماركت",
-          "name": "ماركت الخير",
-          "job": "جميع المواد الغذائية والخضار والفاكهة",
-          "image": None,
-          "phone": "201124214831",
-          "badge": "مميز 🌟",
-      },
-  ]
+  st.session_state["services_list"] = []
 
 if "pending_services" not in st.session_state:
   st.session_state["pending_services"] = []
@@ -137,7 +105,6 @@ if menu == "🔍 تصفح الدليل والخدمات":
         set([s["category"] for s in st.session_state["services_list"]])
     )
 
-    # Informative box showing available areas and categories explicitly
     st.markdown(
         f"""
         <div class="info-box">
@@ -149,7 +116,6 @@ if menu == "🔍 تصفح الدليل والخدمات":
         unsafe_allow_html=True,
     )
 
-    # Search bar with a dedicated search button using a form structure
     with st.form("search_form"):
       search_query = st.text_input(
           "🔎 اكتب اسم المنطقة (مثل: الخانكة، المرج...) أو اسم الخدمة:", ""
@@ -158,7 +124,6 @@ if menu == "🔍 تصفح الدليل والخدمات":
           label="ابحث الآن 🔍 (أو اضغط Enter)"
       )
 
-    # Determine which services to display based on button press or input
     if search_btn and search_query.strip() != "":
       norm_query = normalize_text(search_query)
       st.markdown(
@@ -174,7 +139,6 @@ if menu == "🔍 تصفح الدليل والخدمات":
         if any(term in norm_combined for term in norm_query.split()):
           matched_services.append(s)
     else:
-      # Default: Show ALL services available in the directory automatically before searching
       st.markdown(
           "<h3>📋 جميع الخدمات والأنشطة المتاحة في الدليل</h3>",
           unsafe_allow_html=True,
@@ -213,13 +177,16 @@ if menu == "🔍 تصفح الدليل والخدمات":
     else:
       st.info("لا توجد خدمات مطابقة لبحثك.")
   else:
-    st.info("لا توجد خدمات مضافة حالياً في الدليل.")
+    st.info(
+        "الدليل خالي حالياً. اذهب إلى قسم 'إضافة خدمة أو نشاط جديد' لإضافة أول"
+        " خدمة!"
+    )
 
 elif menu == "➕ إضافة خدمة أو نشاط جديد":
   st.markdown("---")
   st.markdown("<h2>➕ أضف خدمتك أو نشاطك للدليل</h2>", unsafe_allow_html=True)
   st.markdown(
-      "<p>املأ بيانات خدمتك، وسيتم إرسالها للإدارة للمراجعة والتأكيد قبل"
+      "<p>املأ بيانات خدمتك، وسيتم إرسالها فوراً للإدارة للمراجعة وتأكيد"
       " النشر.</p>",
       unsafe_allow_html=True,
   )
@@ -256,8 +223,8 @@ elif menu == "➕ إضافة خدمة أو نشاط جديد":
             "badge": p_badge,
         })
         st.success(
-            "تم إرسال طلبك بنجاح! سيتم مراجعته وتأكيده ونشره بواسطة الإدارة"
-            " قريباً."
+            "تم إرسال طلبك بنجاح! توجه إلى لوحة تحكم الإدارة لتأكيد ونشر الخدمة"
+            " فوراً."
         )
       else:
         st.warning("من فضلك أكمل جميع الحقول الأساسية المطلوبة.")
@@ -326,14 +293,17 @@ else:
             st.success("تم تأكيد النشر وأصبحت الخدمة ظاهرة في الدليل!")
             st.rerun()
         with col2:
-          if st.button(f"رفض وإلغاء ❌", key=f"reject_{idx}"):
+          if st.button(f"رفض وإلغاء ❌", key=f"reject_{idx}графі"):
             st.session_state["pending_services"].pop(idx)
             st.success("تم رفض الطلب.")
             st.rerun()
 
-        with st.expander(f"✏️ تعديل الخطأ الإملائي قبل النشر للطلب #{idx + 1}"):
+        # Dedicated Editing Section to fix spelling mistakes before publishing
+        with st.expander(
+            f"✏️ تصحيح وتعديل الأخطاء الإملائية (مثل الخانكة) للطلب #{idx + 1}"
+        ):
           with st.form(key=f"edit_pending_form_{idx}"):
-            new_region = st.text_input("تعديل المنطقة:", value=s["region"])
+            new_region = st.text_input("تعديل اسم المنطقة:", value=s["region"])
             new_cat = st.text_input("تعديل القسم:", value=s["category"])
             new_name = st.text_input("تعديل الاسم:", value=s["name"])
             new_job = st.text_area("تعديل الوصف:", value=s["job"])
@@ -349,7 +319,7 @@ else:
               st.session_state["services_list"].append(s)
               st.session_state["pending_services"].pop(idx)
               st.success(
-                  "تم تعديل الخطأ الإملائي وتأكيد نشر الخدمة في الدليل بنجاح!"
+                  "تم تصحيح الخطأ الإملائي ونشر الخدمة في الدليل بنجاح!"
               )
               st.rerun()
     else:
